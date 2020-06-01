@@ -29,22 +29,14 @@
 #include "periph/f1/periph_cpu.h"
 #elif defined(CPU_FAM_STM32F2)
 #include "periph/f2/periph_cpu.h"
-#elif defined(CPU_FAM_STM32F3)
-#include "periph/f3/periph_cpu.h"
 #elif defined(CPU_FAM_STM32F4)
 #include "periph/f4/periph_cpu.h"
-#elif defined(CPU_FAM_STM32F7)
-#include "periph/f7/periph_cpu.h"
 #elif defined(CPU_FAM_STM32L0)
 #include "periph/l0/periph_cpu.h"
 #elif defined(CPU_FAM_STM32L1)
 #include "periph/l1/periph_cpu.h"
 #elif defined(CPU_FAM_STM32L4)
 #include "periph/l4/periph_cpu.h"
-#elif defined(CPU_FAM_STM32WB)
-#include "periph/wb/periph_cpu.h"
-#else
-#error Unsupported STM32 CPU family
 #endif
 
 #ifdef __cplusplus
@@ -75,6 +67,13 @@ extern "C" {
 #define CPUID_LEN           (12U)
 
 /**
+ * @brief   Starting address of the CPU ID
+ */
+#ifndef CPUID_ADDR
+#define CPUID_ADDR          (UID_BASE)
+#endif
+
+/**
  * @brief   We provide our own pm_off() function for all STM32-based CPUs
  */
 #define PROVIDES_PM_LAYERED_OFF
@@ -83,6 +82,11 @@ extern "C" {
  * @brief   All STM timers have 4 capture-compare channels
  */
 #define TIMER_CHAN          (4U)
+
+/**
+ * @brief   Define a macro for accessing a timer channel
+ */
+#define TIM_CHAN(tim, chan) *(&dev(tim)->CCR1 + chan)
 
 /**
  * @brief   All STM QDEC timers have 2 capture channels
@@ -514,7 +518,9 @@ typedef struct {
     uint32_t rcc_mask;              /**< bit in clock enable register */
     qdec_chan_t chan[QDEC_CHAN];    /**< channel mapping, set to {GPIO_UNDEF, 0}
                                      *   if not used */
+#ifndef CPU_FAM_STM32F1
     gpio_af_t af;                   /**< alternate function used */
+#endif
     uint8_t bus;                    /**< APB bus */
     uint8_t irqn;                   /**< global IRQ channel */
 } qdec_conf_t;

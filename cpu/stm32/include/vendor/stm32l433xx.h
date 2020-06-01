@@ -410,12 +410,12 @@ typedef struct
 
 typedef struct
 {
-  __IO uint32_t IMR;        /*!< EXTI Interrupt mask register 1,             Address offset: 0x00 */
-  __IO uint32_t EMR;        /*!< EXTI Event mask register 1,                 Address offset: 0x04 */
-  __IO uint32_t RTSR;       /*!< EXTI Rising trigger selection register 1,   Address offset: 0x08 */
-  __IO uint32_t FTSR;       /*!< EXTI Falling trigger selection register 1,  Address offset: 0x0C */
-  __IO uint32_t SWIER;      /*!< EXTI Software interrupt event register 1,   Address offset: 0x10 */
-  __IO uint32_t PR;         /*!< EXTI Pending register 1,                    Address offset: 0x14 */
+  __IO uint32_t IMR1;        /*!< EXTI Interrupt mask register 1,             Address offset: 0x00 */
+  __IO uint32_t EMR1;        /*!< EXTI Event mask register 1,                 Address offset: 0x04 */
+  __IO uint32_t RTSR1;       /*!< EXTI Rising trigger selection register 1,   Address offset: 0x08 */
+  __IO uint32_t FTSR1;       /*!< EXTI Falling trigger selection register 1,  Address offset: 0x0C */
+  __IO uint32_t SWIER1;      /*!< EXTI Software interrupt event register 1,   Address offset: 0x10 */
+  __IO uint32_t PR1;         /*!< EXTI Pending register 1,                    Address offset: 0x14 */
   uint32_t      RESERVED1;   /*!< Reserved, 0x18                                                   */
   uint32_t      RESERVED2;   /*!< Reserved, 0x1C                                                   */
   __IO uint32_t IMR2;        /*!< EXTI Interrupt mask register 2,             Address offset: 0x20 */
@@ -852,7 +852,10 @@ typedef struct
   __IO uint32_t PSC;         /*!< TIM prescaler,                            Address offset: 0x28 */
   __IO uint32_t ARR;         /*!< TIM auto-reload register,                 Address offset: 0x2C */
   __IO uint32_t RCR;         /*!< TIM repetition counter register,          Address offset: 0x30 */
-  __IO uint32_t CCR[4];        /*!< TIM capture/compare register 1,           Address offset: 0x34 */
+  __IO uint32_t CCR1;        /*!< TIM capture/compare register 1,           Address offset: 0x34 */
+  __IO uint32_t CCR2;        /*!< TIM capture/compare register 2,           Address offset: 0x38 */
+  __IO uint32_t CCR3;        /*!< TIM capture/compare register 3,           Address offset: 0x3C */
+  __IO uint32_t CCR4;        /*!< TIM capture/compare register 4,           Address offset: 0x40 */
   __IO uint32_t BDTR;        /*!< TIM break and dead-time register,         Address offset: 0x44 */
   __IO uint32_t DCR;         /*!< TIM DMA control register,                 Address offset: 0x48 */
   __IO uint32_t DMAR;        /*!< TIM DMA address for full transfer,        Address offset: 0x4C */

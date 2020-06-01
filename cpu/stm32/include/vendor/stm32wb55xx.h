@@ -622,7 +622,10 @@ typedef struct
   __IO uint32_t PSC;         /*!< TIM prescaler register,                   Address offset: 0x28 */
   __IO uint32_t ARR;         /*!< TIM auto-reload register,                 Address offset: 0x2C */
   __IO uint32_t RCR;         /*!< TIM repetition counter register,          Address offset: 0x30 */
-  __IO uint32_t CCR[4];      /*!< TIM capture/compare register 1-4,         Address offset: 0x34 */
+  __IO uint32_t CCR1;        /*!< TIM capture/compare register 1,           Address offset: 0x34 */
+  __IO uint32_t CCR2;        /*!< TIM capture/compare register 2,           Address offset: 0x38 */
+  __IO uint32_t CCR3;        /*!< TIM capture/compare register 3,           Address offset: 0x3C */
+  __IO uint32_t CCR4;        /*!< TIM capture/compare register 4,           Address offset: 0x40 */
   __IO uint32_t BDTR;        /*!< TIM break and dead-time register,         Address offset: 0x44 */
   __IO uint32_t DCR;         /*!< TIM DMA control register,                 Address offset: 0x48 */
   __IO uint32_t DMAR;        /*!< TIM DMA address for full transfer,        Address offset: 0x4C */
@@ -819,10 +822,10 @@ typedef struct
   */
 typedef struct
 {
-  __IO uint32_t RTSR;          /*!< EXTI rising trigger selection register [31:0],            Address offset: 0x00 */
-  __IO uint32_t FTSR;          /*!< EXTI falling trigger selection register [31:0],           Address offset: 0x04 */
-  __IO uint32_t SWIER;         /*!< EXTI software interrupt event register [31:0],            Address offset: 0x08 */
-  __IO uint32_t PR;            /*!< EXTI pending register [31:0],                             Address offset: 0x0C */
+  __IO uint32_t RTSR1;          /*!< EXTI rising trigger selection register [31:0],            Address offset: 0x00 */
+  __IO uint32_t FTSR1;          /*!< EXTI falling trigger selection register [31:0],           Address offset: 0x04 */
+  __IO uint32_t SWIER1;         /*!< EXTI software interrupt event register [31:0],            Address offset: 0x08 */
+  __IO uint32_t PR1;            /*!< EXTI pending register [31:0],                             Address offset: 0x0C */
   __IO uint32_t RESERVED1[4];   /*!< Reserved,                                                 Address offset: 0x10 - 0x1C */
   __IO uint32_t RTSR2;          /*!< EXTI rising trigger selection register [31:0],            Address offset: 0x20 */
   __IO uint32_t FTSR2;          /*!< EXTI falling trigger selection register [31:0],           Address offset: 0x24 */
@@ -831,8 +834,8 @@ typedef struct
   __IO uint32_t RESERVED2[4];   /*!< Reserved,                                                 Address offset: 0x30 - 0x3C */
   __IO uint32_t RESERVED3[8];   /*!< Reserved,                                                 Address offset: 0x40 - 0x5C */
   __IO uint32_t RESERVED4[8];   /*!< Reserved,                                                 Address offset: 0x60 - 0x7C */
-  __IO uint32_t IMR;           /*!< EXTI wakeup with interrupt mask register for cpu1 [31:0], Address offset: 0x80 */
-  __IO uint32_t EMR;           /*!< EXTI wakeup with event mask register for cpu1 [31:0],     Address offset: 0x84 */
+  __IO uint32_t IMR1;           /*!< EXTI wakeup with interrupt mask register for cpu1 [31:0], Address offset: 0x80 */
+  __IO uint32_t EMR1;           /*!< EXTI wakeup with event mask register for cpu1 [31:0],     Address offset: 0x84 */
   __IO uint32_t RESERVED5[2];   /*!< Reserved,                                                 Address offset: 0x88 - 0x8C */
   __IO uint32_t IMR2;           /*!< EXTI wakeup with interrupt mask register for cpu1 [31:0], Address offset: 0x90 */
   __IO uint32_t EMR2;           /*!< EXTI wakeup with event mask register for cpu1 [31:0],     Address offset: 0x94 */
