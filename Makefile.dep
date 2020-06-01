@@ -967,6 +967,10 @@ ifneq (,$(filter usbus_cdc_acm,$(USEMODULE)))
   USEMODULE += usbus
 endif
 
+ifneq (,$(filter usbus_hid,$(USEMODULE)))
+  USEMODULE += usbus
+endif
+
 ifneq (,$(filter usbus_cdc_ecm,$(USEMODULE)))
   USEMODULE += iolist
   USEMODULE += fmt
