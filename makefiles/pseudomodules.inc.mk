@@ -103,6 +103,7 @@ PSEUDOMODULES += sock_udp
 PSEUDOMODULES += stdin
 PSEUDOMODULES += stdio_ethos
 PSEUDOMODULES += stdio_cdc_acm
+PSEUDOMODULES += stdio_hid
 PSEUDOMODULES += stdio_uart_rx
 PSEUDOMODULES += suit_transport_%
 PSEUDOMODULES += wakaama_objects_%

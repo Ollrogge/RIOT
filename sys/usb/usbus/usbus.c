@@ -36,7 +36,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 #define _USBUS_MSG_QUEUE_SIZE    (16)
@@ -237,6 +237,7 @@ static void *_usbus_thread(void *args)
     dev->epcb = _event_ep_cb;
     /* initialize low-level driver */
     dev->context = usbus;
+    
     usbdev_init(dev);
 
     usbus_add_string_descriptor(usbus, &usbus->config,
@@ -248,6 +249,7 @@ static void *_usbus_thread(void *args)
 
     /* Initialize handlers */
     _usbus_init_handlers(usbus);
+
 
     if (IS_ACTIVE(CONFIG_USBUS_AUTO_ATTACH)) {
         static const usbopt_enable_t _enable = USBOPT_ENABLE;
