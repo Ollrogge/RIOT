@@ -32,7 +32,7 @@ static uint8_t report_desc_ctap[] = {
   0x95, 0x40, // HID_ReportCount ( HID_INPUT_REPORT_BYTES ),
   0x81, 0x02, // HID_Input ( HID_Data | HID_Absolute | HID_Variable ),
   0x09, 0x21, // HID_Usage ( FIDO_USAGE_DATA_OUT ),
-  0x15, 0x00, // HID_LogicalMin ( 0 ),
+  0x15, 0x00, // HID_LogicalMin ( 0 ), 
   0x26, 0xFF, 0x00, // HID_LogicalMaxS ( 0xff ),
   0x75, 0x08, // HID_ReportSize ( 8 ),
   0x95, 0x40, // HID_ReportCount ( HID_OUTPUT_REPORT_BYTES ),
@@ -48,7 +48,6 @@ static const usbus_handler_driver_t hid_driver = {
 };
 
 static size_t _gen_hid_descriptor(usbus_t *usbus, void* arg);
-//static size_t _gen_report_desc_ctap(usbus_t *usbus, void* arg);
 
 static const usbus_descr_gen_funcs_t _hid_descriptor = {
     .fmt_post_descriptor = _gen_hid_descriptor,
@@ -72,22 +71,9 @@ static size_t _gen_hid_descriptor(usbus_t *usbus, void* arg)
     hid.report_type = USB_HID_DESCR_REPORT;
     hid.report_length = sizeof(report_desc_ctap);
 
-    DEBUG("SIZE: %d %d \n", sizeof(hid), sizeof(report_desc_ctap));
-
     usbus_control_slicer_put_bytes(usbus, (uint8_t*)&hid, sizeof(hid));
     return sizeof(usb_desc_hid_t);
 }
-
-/*
-static size_t _gen_report_desc_ctap(usbus_t *usbus, void* arg) 
-{
-    (void)arg;
-    (void)usbus;
-
-    usbus_control_slicer_put_bytes(usbus, report_desc_ctap, sizeof(report_desc_ctap));
-    return sizeof(report_desc_ctap);
-}
-*/
 
 void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid)
 {
@@ -119,15 +105,10 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);
-    
-    ep = usbus_add_endpoint(usbus, &hid->iface,  
-                            USB_EP_TYPE_INTERRUPT, USB_EP_DIR_OUT,
-                            CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
-
-    ep->interval = 0x05;
-    usbus_enable_endpoint(ep);
 
     usbus_add_interface(usbus, &hid->iface);
+
+    // usbus_handler_set_flag(handler, USBUS_HANDLER_FLAG_RESET);
 }
 
 static void _handle_reset(usbus_handler_t *handler)
@@ -135,7 +116,6 @@ static void _handle_reset(usbus_handler_t *handler)
     usbus_hid_device_t *hid = (usbus_hid_device_t*)handler;
     DEBUG("USB HID: Reset notification received\n");
     (void)hid;
-
 }
 
 static void _event_handler(usbus_t *usbus, usbus_handler_t *handler, usbus_event_usb_t event)
@@ -159,32 +139,33 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     (void)handler;
     (void)state;
     (void)setup;
-    //usbus_hid_device_t *hid = (usbus_hid_device_t*)handler;
-    DEBUG("TYPE: %d %d \n ", setup->value >> 8, setup->value & 0x00FF)
+    DEBUG("USB_HID: request: %d type: %d value: %d length: %d %d \n", setup->request, setup->type, setup->value >> 8, setup->length, state);
+
     switch(setup->request) {
-        case USB_HID_REQUEST_GET_REPORT:
-            DEBUG("USB_HID: 1 \n");
+        case USB_SETUP_REQ_GET_DESCRIPTOR: {
+            if (setup->value >> 8 == USB_HID_DESCR_REPORT) {
+                usbus_control_slicer_put_bytes(usbus, report_desc_ctap, sizeof(report_desc_ctap));
+                //DEBUG("USB_HID: send ctap report \n");
+            }
             break;
-        case USB_HID_REQUEST_GET_IDLE:
-            DEBUG("USB_HID: 2 \n");
-            break;
-        case USB_HID_REQUEST_GET_PROTOCOL:
-            DEBUG("USB_HID: 3 \n");
+        }
+        case USB_HID_REQUEST_SET_IDLE:
+            // Not required, expect for keyboards using the boot protocol
+            //https://proyectosfie.webcindario.com/usb/libro/capitulo11.pdf
+            DEBUG("USB_HID: set idle %d \n", setup->index);
             break;
         case USB_HID_REQUEST_SET_REPORT:
-            DEBUG("USB_HID: 4 \n");
-            break;
-        case USB_HID_REQUEST_SET_IDLE:
-            DEBUG("USB_HID: 5 \n");
-            break;
-        case USB_HID_REQUEST_SET_PROTOCOL:
-            DEBUG("USB_HID: 6 \n");
+            /*
+            The host can then request reports using either interrupt IN transfers and/or control transfers with Get_Report requests. 
+            The device also has the option to  support  receiving  reports  using  interrupt  
+            OUT  transfers  and/or  control transfers with Set_Report requests
+            */
+            //The  host  sends  an  Output  or  Feature  report  to  a  HID  using  a control transfer.
             break;
         default:
-            DEBUG("USB_HID: unknown request %x \n", setup->request);
-            break;
+            DEBUG("USB_HID: unknown request %d \n", setup->request);
+            return -1;
     }
-
     return 1;
 }
 
