@@ -1,4 +1,3 @@
-
 #ifndef USB_HID_H
 #define USB_HID_H
 
@@ -26,23 +25,43 @@ typedef struct __attribute__((packed))
   uint16_t report_length;   /**< the total size of the Report descriptor. */
 } usb_desc_hid_t;
 
+
 /**
  * @brief USBUS HID context struct forward declaration
  */
 typedef struct usbus_hid_device usbus_hid_device_t;
 
-void usbus_hid_device_init(usbus_t*, usbus_hid_device_t*);
 
-typedef void (*usbus_hid_cb_t)(usbus_hid_device_t*, uint8_t*, size_t);
+/**
+ * @brief HID data callback.
+ *
+ * Callback for received data from the USB host
+ *
+ * @param[in]   hid     HID handler context
+ * @param[in]   data    ptr to the data
+ * @param[in]   len     Length of the received data
+ */
+typedef void (*usbus_hid_cb_t)(usbus_hid_device_t *hid, 
+                                uint8_t* data, size_t len);
 
 struct usbus_hid_device {
-    usbus_handler_t handler_ctrl;
-    usbus_interface_t iface;
-    usbus_descr_gen_t hid_descr;
-    usbus_hid_cb_t cb;
-    tsrb_t tsrb;
-    usbus_t *usbus;
+    usbus_handler_t handler_ctrl;     /**< control handler                 */
+    usbus_interface_t iface;          /**< HID interface                 */
+    usbus_descr_gen_t hid_descr;      /**< HID descriptor generator */
+    uint8_t* report_desc; /**< report desc reference                */
+    size_t report_desc_size; /**< report desc size               */
+    usbus_t *usbus; /**< USBUS reference                 */
+    tsrb_t tsrb;  /**< TSRB for data to the host       */
+    size_t occupied; /**< Number of bytes for the host    */
+    usbus_hid_cb_t cb; /**< Callback for data handlers      */
 };
+
+void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,  usbus_hid_cb_t cb,
+                            uint8_t *buf, size_t len, uint8_t* report_desc, 
+                            size_t report_desc_size);
+
+size_t usbus_hid_submit(usbus_hid_device_t*, const uint8_t *buf, size_t len);
+
 
 /**
  * @name USB HID subclass types
@@ -76,11 +95,14 @@ struct usbus_hid_device {
 
 
 /**
- * @brief USB HID bulk endpoint size
+ * @name USB HID interrupt endpoint size
  */
 #define CONFIG_USBUS_HID_INTERRUPT_EP_SIZE    0x40
 
 
+/**
+ * @brief USB HID class specific control requests
+ */
 #define USB_HID_REQUEST_GET_REPORT 0x01
 #define USB_HID_REQUEST_GET_IDLE 0x02
 #define USB_HID_REQUEST_GET_PROTOCOL 0x03
@@ -88,9 +110,6 @@ struct usbus_hid_device {
 #define USB_HID_REQUEST_SET_IDLE 0x0a
 #define USB_HID_REQUEST_SET_PROTOCOL 0x0b
 
-
-#define USBUS_HID_LINE_STATE_IDLE 0x00
-#define USBUS_HID_LINE_STATE_BUSY 0x01
 
 #ifdef __cplusplus
 }
