@@ -19,6 +19,9 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
 static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
                              usbdev_ep_t *ep, usbus_event_transfer_t event);
 
+static void _handle_flush(event_t *ev);
+static void _handle_in(usbus_hid_device_t* hid, usbdev_ep_t *ep);
+
 
 static const usbus_handler_driver_t hid_driver = {
     .init = _init,
@@ -61,10 +64,28 @@ size_t usbus_hid_submit(usbus_hid_device_t* hid, const uint8_t *buf, size_t len)
     size_t n;
     unsigned int old;
 
+    DEBUG("usbus_hid_submit: %u \n", len);
+
     old = irq_disable();
     n = tsrb_add(&hid->tsrb, buf, len);
     irq_restore(old);
     return n;
+}
+
+void usbus_hid_flush(usbus_hid_device_t* hid)
+{
+    if (hid->usbus) {
+        usbus_event_post(hid->usbus, &hid->flush);
+    }
+}
+
+static void _handle_flush(event_t *ev)
+{
+    usbus_hid_device_t *hid = container_of(ev, usbus_hid_device_t, flush);
+
+    if (hid->occupied == 0) {
+        _handle_in(hid, hid->iface.ep->ep);
+    }
 }
 
 void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,  usbus_hid_cb_t cb,
@@ -87,6 +108,8 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
 {
     DEBUG("USB_HID: initialization\n");
     usbus_hid_device_t *hid = (usbus_hid_device_t*)handler;
+
+    hid->flush.handler = _handle_flush;
 
     hid->hid_descr.next = NULL;
     hid->hid_descr.funcs = &_hid_descriptor;
@@ -149,7 +172,6 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
               if (len > 0) {
                   hid->cb(hid, data, len);
               }
-              (void)data;
               DEBUG("USB HID SET_REPORT len read: %d \n", len);
           }      
           break;
@@ -167,6 +189,8 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
 static void _handle_in(usbus_hid_device_t* hid, usbdev_ep_t *ep)
 {
     unsigned int old;
+
+    DEBUG("USB_HID _handle_in \n");
 
     old = irq_disable();
     while(!tsrb_empty(&hid->tsrb)) {

@@ -53,6 +53,7 @@ struct usbus_hid_device {
     usbus_t *usbus; /**< USBUS reference                 */
     tsrb_t tsrb;  /**< TSRB for data to the host       */
     size_t occupied; /**< Number of bytes for the host    */
+    event_t flush;
     usbus_hid_cb_t cb; /**< Callback for data handlers      */
 };
 
@@ -61,6 +62,8 @@ void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,  usbus_hid_c
                             size_t report_desc_size);
 
 size_t usbus_hid_submit(usbus_hid_device_t*, const uint8_t *buf, size_t len);
+
+void usbus_hid_flush(usbus_hid_device_t*);
 
 
 /**
