@@ -17,18 +17,23 @@ static uint8_t _hid_tx_buf_mem[CONFIG_USBUS_HID_INTERRUPT_EP_SIZE];
 static uint8_t _hid_rx_buf_mem[CONFIG_USBUS_HID_INTERRUPT_EP_SIZE];
 static isrpipe_t _hid_stdio_isrpipe = ISRPIPE_INIT(_hid_rx_buf_mem);
 
-ssize_t usb_hid_stdio_read(void* buffer, size_t size)
+
+void stdio_init(void)
+{
+}
+
+ssize_t stdio_read(void* buffer, size_t size)
 {
     return isrpipe_read(&_hid_stdio_isrpipe, buffer, size);
 }
 
-ssize_t usb_hid_stdio_write(const void* buffer, size_t size)
+ssize_t stdio_write(const void* buffer, size_t size)
 {
     const char *start = buffer;
     do {
         size_t n = usbus_hid_submit(&hid, buffer, size);
         usbus_hid_flush(&hid);
-        
+
         buffer = (char*)buffer + n;
         size -= n;
     } while(size);

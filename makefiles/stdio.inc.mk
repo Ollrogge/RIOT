@@ -1,6 +1,7 @@
 STDIO_MODULES = \
   slipdev_stdio \
   stdio_cdc_acm \
+  stdio_hid \
   stdio_ethos \
   stdio_null \
   stdio_rtt \
@@ -15,6 +16,11 @@ endif
 
 ifneq (,$(filter stdio_cdc_acm,$(USEMODULE)))
   USEMODULE += usbus_cdc_acm
+  USEMODULE += isrpipe
+endif
+
+ifneq (,$(filter stdio_hid,$(USEMODULE)))
+  USEMODULE += usbus_hid
   USEMODULE += isrpipe
 endif
 
