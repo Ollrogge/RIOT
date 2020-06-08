@@ -128,12 +128,14 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);
 
+    /* Problematic code starts here */
     ep = usbus_add_endpoint(usbus, &hid->iface,
                                               USB_EP_TYPE_INTERRUPT, USB_EP_DIR_OUT,
                                               CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
 
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);
+    /* Problematic ends here */
 
     usbus_add_interface(usbus, &hid->iface);
 }

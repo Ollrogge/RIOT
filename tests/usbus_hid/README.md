@@ -44,3 +44,17 @@ bash: echo: write error: Connection timed out
 ### Correct behavior
 The printf statement in the main function gets triggered stating how many bytes we received over the USB HID interface.
 
+Code creating the Problem
+===============
+
+Registering an interrupt OUT endpoint.
+
+Code is located in the _init function in sys/usb/usbus/hid.c:
+
+```c
+    ep = usbus_add_endpoint(usbus, &hid->iface, USB_EP_TYPE_INTERRUPT,
+                            USB_EP_DIR_OUT,CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
+
+    ep->interval = 0x05;
+    usbus_enable_endpoint(ep);
+```
