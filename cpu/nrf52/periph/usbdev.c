@@ -33,7 +33,7 @@
 #include "usb/descriptor.h"
 #include "bitarithm.h"
 
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 static nrfusb_t _usbdevs[NRF_USB_NUM_PERIPH];

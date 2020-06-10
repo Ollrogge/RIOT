@@ -8,7 +8,7 @@
 #include "usb/usbus/hid.h"
 #include "tsrb.h"
 
-#define ENABLE_DEBUG    (1)
+#define ENABLE_DEBUG    (0)
 #include "debug.h"
 
 static void _init(usbus_t *usbus, usbus_handler_t *handler);
@@ -21,7 +21,6 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
 
 static void _handle_flush(event_t *ev);
 static void _handle_in(usbus_hid_device_t* hid, usbdev_ep_t *ep);
-
 
 static const usbus_handler_driver_t hid_driver = {
     .init = _init,

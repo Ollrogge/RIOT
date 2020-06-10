@@ -28,7 +28,7 @@
 #include <string.h>
 #include <errno.h>
 
-#define ENABLE_DEBUG    (1)
+#define ENABLE_DEBUG    (0)
 #include "debug.h"
 
 static void _init(usbus_t *usbus, usbus_handler_t *handler);
@@ -179,7 +179,7 @@ static int _req_descriptor(usbus_t *usbus, usb_setup_t *pkt)
     /* Decode descriptor type */
     switch (type) {
         case USB_TYPE_DESCRIPTOR_DEVICE:
-            return _req_dev(usbus); 
+            return _req_dev(usbus);
         case USB_TYPE_DESCRIPTOR_CONFIGURATION:
             return _req_config(usbus);
         case USB_TYPE_DESCRIPTOR_STRING:
