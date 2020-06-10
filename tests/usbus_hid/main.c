@@ -45,9 +45,6 @@ int main(void)
   xtimer_sleep(3);
   init();
   puts("RIOT USB HID echo test");
-  puts("Execute command 'dmesg' to get endpoint number (/dev/hidrawX)");
-  puts("write to /dev/hidrawX to test echo output");
-  puts("e.g echo 'Test' > /dev/hidraw6");
 
   uint8_t buffer[CONFIG_USBUS_HID_INTERRUPT_EP_SIZE];
   for (;;) {
