@@ -137,6 +137,9 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     usbus_enable_endpoint(ep);
     /* Problematic ends here */
 
+    //signal INTERRUPT OUT ready to receive data
+    usbdev_ep_ready(ep->ep, 0);
+
     usbus_add_interface(usbus, &hid->iface);
 }
 
@@ -227,6 +230,15 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         if (!tsrb_empty(&hid->tsrb)) {
             return _handle_in(hid, ep);
         }
+    }
+    else if ((ep->dir == USB_EP_DIR_OUT) && (ep->type == USB_EP_TYPE_INTERRUPT)) {
+        size_t size;
+        usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &size, sizeof(size_t));
+        if (size > 0) {
+            DEBUG("USB HID received %u bytes \n", size);
+            hid->cb(hid, ep->buf, size);
+        }
+        usbdev_ep_ready(ep, 0);
     }
 }
 
