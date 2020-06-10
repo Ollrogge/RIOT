@@ -84,12 +84,12 @@ static void _handle_flush(event_t *ev)
     usbus_hid_device_t *hid = container_of(ev, usbus_hid_device_t, flush);
 
     if (hid->occupied == 0) {
-        _handle_in(hid, hid->iface.ep->ep);
+        _handle_in(hid, hid->iface.ep->next->ep);
     }
 }
 
 void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,  usbus_hid_cb_t cb,
-                            uint8_t *buf, size_t len, uint8_t* report_desc, 
+                            uint8_t *buf, size_t len, uint8_t* report_desc,
                             size_t report_desc_size)
 {
     memset(hid, 0, sizeof(usbus_hid_device_t));
@@ -104,7 +104,7 @@ void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,  usbus_hid_c
     usbus_register_event_handler(usbus, &hid->handler_ctrl);
 }
 
-static void _init(usbus_t *usbus, usbus_handler_t *handler) 
+static void _init(usbus_t *usbus, usbus_handler_t *handler)
 {
     DEBUG("USB_HID: initialization\n");
     usbus_hid_device_t *hid = (usbus_hid_device_t*)handler;
@@ -121,12 +121,22 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     hid->iface.descr_gen = &hid->hid_descr;
     hid->iface.handler = handler;
 
-    usbus_endpoint_t *ep = usbus_add_endpoint(usbus, &hid->iface, 
-                                              USB_EP_TYPE_INTERRUPT, USB_EP_DIR_IN, 
+    usbus_endpoint_t *ep = usbus_add_endpoint(usbus, &hid->iface,
+                                              USB_EP_TYPE_INTERRUPT, USB_EP_DIR_IN,
                                               CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
-    
+
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);
+
+    ep = usbus_add_endpoint(usbus, &hid->iface,
+                                              USB_EP_TYPE_INTERRUPT, USB_EP_DIR_OUT,
+                                              CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
+
+    ep->interval = 0x05;
+    usbus_enable_endpoint(ep);
+
+    //signal INTERRUPT OUT ready to receive data
+    usbdev_ep_ready(ep->ep, 0);
 
     usbus_add_interface(usbus, &hid->iface);
 }
@@ -167,13 +177,12 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
             break;
         case USB_HID_REQUEST_SET_REPORT:
           if ((state == USBUS_CONTROL_REQUEST_STATE_OUTDATA)) {
-              size_t len = 0;
-              uint8_t* data = usbus_control_get_out_data(usbus, &len);
-              if (len > 0) {
-                  hid->cb(hid, data, len);
+              size_t size = 0;
+              uint8_t* data = usbus_control_get_out_data(usbus, &size);
+              if (size > 0) {
+                  hid->cb(hid, data, size);
               }
-              DEBUG("USB HID SET_REPORT len read: %d \n", len);
-          }      
+          }
           break;
         case USB_HID_REQUEST_SET_IDLE:
             break;
@@ -190,8 +199,6 @@ static void _handle_in(usbus_hid_device_t* hid, usbdev_ep_t *ep)
 {
     unsigned int old;
 
-    DEBUG("USB_HID _handle_in \n");
-
     old = irq_disable();
     while(!tsrb_empty(&hid->tsrb)) {
         int c = tsrb_get_one(&hid->tsrb);
@@ -202,6 +209,8 @@ static void _handle_in(usbus_hid_device_t* hid, usbdev_ep_t *ep)
     }
 
     irq_restore(old);
+
+    DEBUG("USB_HID _handle_in %d \n ", hid->occupied);
     usbdev_ep_ready(ep, hid->occupied);
 }
 
@@ -219,7 +228,16 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
             return _handle_in(hid, ep);
         }
     }
+    else if ((ep->dir == USB_EP_DIR_OUT) && (ep->type == USB_EP_TYPE_INTERRUPT)) {
+        size_t size;
+        usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &size, sizeof(size_t));
+
+        if (size > 0) {
+            hid->cb(hid, ep->buf, size);
+        }
+
+        usbdev_ep_ready(ep, 0);
+    }
 }
 
 
-                                                        
