@@ -8,7 +8,7 @@
 #include "usb/usbus/hid.h"
 #include "tsrb.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 static void _init(usbus_t *usbus, usbus_handler_t *handler);
@@ -43,8 +43,6 @@ static size_t _gen_hid_descriptor(usbus_t *usbus, void* arg)
 {
     usbus_hid_device_t* hid_dev = arg;
     usb_desc_hid_t hid_desc;
-
-    DEBUG("Report desc size: %d \n", sizeof(*(hid_dev->report_desc)));
 
     hid_desc.length = sizeof(usb_desc_hid_t);
     hid_desc.desc_type = USB_HID_DESCR_HID;
@@ -196,9 +194,11 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
 
 static void _handle_in(usbus_hid_device_t* hid, usbdev_ep_t *ep)
 {
-    unsigned int old;
+    if (hid->usbus->state != USBUS_STATE_CONFIGURED) {
+        return;
+    }
 
-    old = irq_disable();
+    unsigned int old = irq_disable();
     while(!tsrb_empty(&hid->tsrb)) {
         int c = tsrb_get_one(&hid->tsrb);
         ep->buf[hid->occupied++] = (uint8_t)c;
@@ -228,13 +228,11 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         }
     }
     else if ((ep->dir == USB_EP_DIR_OUT) && (ep->type == USB_EP_TYPE_INTERRUPT)) {
-        size_t size;
-        usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &size, sizeof(size_t));
-
-        if (size > 0) {
-            hid->cb(hid, ep->buf, size);
+        size_t len;
+        usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
+        if (len > 0) {
+            hid->cb(hid, ep->buf, len);
         }
-
         usbdev_ep_ready(ep, 0);
     }
 }
