@@ -22,6 +22,11 @@ config HAS_ARCH_32BIT
     help
         Indicates that the CPU has a 32-bits architecture.
 
+config HAS_ARCH_ARM
+    bool
+    help
+        Indicates that the current architecture is ARM.
+
 config HAS_ARDUINO
     bool
     help
@@ -42,11 +47,6 @@ config HAS_BOOTLOADER_ARDUINO
     help
         Indicates that the Arduino bootloader is used.
 
-config HAS_BOOTLOADER_NRFUTIL
-    bool
-    help
-        Indicates that the NRF Util bootloader is used.
-
 config HAS_CPP
     bool
     help
@@ -57,10 +57,20 @@ config HAS_CPU_CHECK_ADDRESS
     help
         Indicates that address validity check is supported.
 
+config HAS_EMULATOR_RENODE
+    bool
+    help
+        Indicates that the platform is compatible with the Renode emulator.
+
 config HAS_ETHERNET
     bool
     help
         Indicates that Ethernet connectivity is present.
+
+config HAS_NO_IDLE_THREAD
+    bool
+    help
+        Indicates that this MCU doesn't need the idle thread
 
 config HAS_MOTOR_DRIVER
     bool
@@ -195,6 +205,11 @@ config HAS_PERIPH_SPI
     help
         Indicates that an SPI peripheral is present.
 
+config HAS_PERIPH_SPI_RECONFIGURE
+    bool
+    help
+        Indicates that the SPI peripheral allows pin reconfiguration.
+
 config HAS_PERIPH_SPI_GPIO_MODE
     bool
     help
@@ -209,6 +224,12 @@ config HAS_PERIPH_TIMER
     bool
     help
         Indicates that a Timer peripheral is present.
+
+config HAS_PERIPH_TIMER_PERIODIC
+    bool
+    help
+        Indicates that the Timer peripheral provides the periodic timeout
+        functionality.
 
 config HAS_PERIPH_UART
     bool

@@ -40,6 +40,14 @@ This way, their names are never removed from the RIOT repository.
 
 # Removed Features
 
+### sys/net/gnrc/nettest [c84cedb07212a90932e446f5d57391d1edd486d0]
+Author:
+- Martine Lenders <mlenders@inf.fu-berlin.de>
+
+Reasons for removal:
+- Not maintained anymore
+- Not used in GNRC
+
 ### sys/net/gnrc/application_layer/tftp [0e2a62078850e1ecc74db2db4d639cf2d8fb96d3]
 Author:
 - DipSwitch <dipswitch@ownage4u.nl>
@@ -173,3 +181,23 @@ Reason for removal:
 - its only user within the RIOT code base `gnrc_ipv6_ext` was reworked in
   f671a87fe2c539c3aecd595ae03fa4f6f209d042 so it is not needed anymore.
 - the function was deprecated in f2760c033c5f332be076b25aa212aca4007c3d65
+
+### boards/wsn430-v1_3b, boards/wsn430-v1_4 [e63cd54f3b1e002a7895bb7c46af889b341c1a15]
+
+Author(s):
+- Hauke Petersen <hauke.petersen@fu-berlin.de>
+- Martine Lenders <m.lenders@fu-berlin.de>
+- Milan Babel <babel@inf.fu-berlin.de>
+- Oliver Hahm <oliver.hahm@inria.fr>
+
+Reason for removal:
+- no longer accessible on the IoT-LAB testbed
+
+### pkg/emb6 [4f243c52eabefe709d78560ce7f1d502d737a999]
+Author(s):
+- Martine S. Lenders <m.lenders@fu-berlin.de>
+
+Reason for removal:
+- Stale upstream (last update to date in Mar 2018)
+- Ported version even older (last update Feb 2016)
+- Updating to more recent version would be more effort than its worth

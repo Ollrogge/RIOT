@@ -41,6 +41,7 @@ extern "C" {
 #define COAP_OPT_URI_PATH       (11)
 #define COAP_OPT_CONTENT_FORMAT (12)
 #define COAP_OPT_URI_QUERY      (15)
+#define COAP_OPT_ACCEPT         (17)
 #define COAP_OPT_LOCATION_QUERY (20)
 #define COAP_OPT_BLOCK2         (23)
 #define COAP_OPT_BLOCK1         (27)
@@ -159,6 +160,13 @@ extern "C" {
  */
 #define COAP_OBS_REGISTER        (0)
 #define COAP_OBS_DEREGISTER      (1)
+/** @} */
+
+/**
+ * @name    CoAP message format constants
+ * @{
+ */
+#define COAP_TOKEN_LENGTH_MAX    (8)
 /** @} */
 
 /**

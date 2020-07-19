@@ -29,14 +29,22 @@
 #include "periph/f1/periph_cpu.h"
 #elif defined(CPU_FAM_STM32F2)
 #include "periph/f2/periph_cpu.h"
+#elif defined(CPU_FAM_STM32F3)
+#include "periph/f3/periph_cpu.h"
 #elif defined(CPU_FAM_STM32F4)
 #include "periph/f4/periph_cpu.h"
+#elif defined(CPU_FAM_STM32F7)
+#include "periph/f7/periph_cpu.h"
+#elif defined(CPU_FAM_STM32G4)
+#include "periph/g4/periph_cpu.h"
 #elif defined(CPU_FAM_STM32L0)
 #include "periph/l0/periph_cpu.h"
 #elif defined(CPU_FAM_STM32L1)
 #include "periph/l1/periph_cpu.h"
 #elif defined(CPU_FAM_STM32L4)
 #include "periph/l4/periph_cpu.h"
+#elif defined(CPU_FAM_STM32WB)
+#include "periph/wb/periph_cpu.h"
 #endif
 
 #ifdef __cplusplus
@@ -53,10 +61,18 @@ extern "C" {
 #define CLOCK_LSI           (37000U)
 #elif defined(CPU_FAM_STM32F2) || defined(CPU_FAM_STM32F4) || \
       defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L4) || \
-      defined(CPU_FAM_STM32WB)
+      defined(CPU_FAM_STM32WB) || defined(CPU_FAM_STM32G4)
 #define CLOCK_LSI           (32000U)
 #else
 #error "error: LSI clock speed not defined for your target CPU"
+#endif
+
+#ifdef Doxygen
+/**
+ * @brief   Starting address of the ROM bootloader
+ *          see application note AN2606
+ */
+#define STM32_BOOTLOADER_ADDR
 #endif
 
 /**
@@ -81,7 +97,7 @@ extern "C" {
 /**
  * @brief   All STM timers have 4 capture-compare channels
  */
-#define TIMER_CHAN          (4U)
+#define TIMER_CHANNEL_NUMOF (4U)
 
 /**
  * @brief   Define a macro for accessing a timer channel
@@ -150,7 +166,8 @@ extern "C" {
 typedef enum {
     APB1,           /**< APB1 bus */
     APB2,           /**< APB2 bus */
-#if defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB)
+#if defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB) || \
+    defined(CPU_FAM_STM32G4)
     APB12,          /**< AHB1 bus, second register */
 #endif
 #if defined(CPU_FAM_STM32L0)
@@ -161,7 +178,7 @@ typedef enum {
     AHB,            /**< AHB bus */
 #elif defined(CPU_FAM_STM32F2) || defined(CPU_FAM_STM32F4) || \
       defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32F7) || \
-      defined(CPU_FAM_STM32WB)
+      defined(CPU_FAM_STM32WB) || defined(CPU_FAM_STM32G4)
     AHB1,           /**< AHB1 bus */
     AHB2,           /**< AHB2 bus */
     AHB3,           /**< AHB3 bus */
@@ -206,17 +223,19 @@ enum {
 #if defined(CPU_FAM_STM32F1) || defined(CPU_FAM_STM32F2) || \
     defined(CPU_FAM_STM32F3) || defined(CPU_FAM_STM32F4) || \
     defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L1) || \
-    defined(CPU_FAM_STM32L4)
+    defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32G4)
     PORT_G = 6,             /**< port G */
 #endif
 #if defined(CPU_FAM_STM32F2) || defined(CPU_FAM_STM32F3) || \
     defined(CPU_FAM_STM32F4) || defined(CPU_FAM_STM32F7) || \
     defined(CPU_FAM_STM32L0) || defined(CPU_FAM_STM32L1) || \
-    defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB)
+    defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB) || \
+    defined(CPU_FAM_STM32G4)
     PORT_H = 7,             /**< port H */
 #endif
 #if defined(CPU_FAM_STM32F2) || defined(CPU_FAM_STM32F4) || \
-    defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L4)
+    defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L4) || \
+    defined(CPU_FAM_STM32G4)
     PORT_I = 8,             /**< port I */
 #endif
 #if defined(CPU_FAM_STM32F7)
@@ -408,17 +427,17 @@ typedef unsigned dma_t;
  * @brief   DMA modes
  */
 typedef enum {
-    DMA_PERIPH_TO_MEM,     /**< Peripheral to memory */
-    DMA_MEM_TO_PERIPH,     /**< Memory to peripheral */
-    DMA_MEM_TO_MEM,        /**< Memory to memory */
+    DMA_PERIPH_TO_MEM = 0,     /**< Peripheral to memory */
+    DMA_MEM_TO_PERIPH = 1,     /**< Memory to peripheral */
+    DMA_MEM_TO_MEM = 2,        /**< Memory to memory */
 } dma_mode_t;
 
 /**
  * @name    DMA Increment modes
  * @{
  */
-#define DMA_INC_SRC_ADDR  (0x01)
-#define DMA_INC_DST_ADDR  (0x02)
+#define DMA_INC_SRC_ADDR  (0x04)
+#define DMA_INC_DST_ADDR  (0x08)
 #define DMA_INC_BOTH_ADDR (DMA_INC_SRC_ADDR | DMA_INC_DST_ADDR)
 /** @} */
 
@@ -427,10 +446,10 @@ typedef enum {
  * @{
  */
 #define DMA_DATA_WIDTH_BYTE      (0x00)
-#define DMA_DATA_WIDTH_HALF_WORD (0x04)
-#define DMA_DATA_WIDTH_WORD      (0x08)
-#define DMA_DATA_WIDTH_MASK      (0x0C)
-#define DMA_DATA_WIDTH_SHIFT     (2)
+#define DMA_DATA_WIDTH_HALF_WORD (0x01)
+#define DMA_DATA_WIDTH_WORD      (0x02)
+#define DMA_DATA_WIDTH_MASK      (0x03)
+#define DMA_DATA_WIDTH_SHIFT     (0)
 /** @} */
 
 /**
@@ -495,8 +514,9 @@ typedef struct {
 typedef struct {
     TIM_TypeDef *dev;               /**< Timer used */
     uint32_t rcc_mask;              /**< bit in clock enable register */
-    pwm_chan_t chan[TIMER_CHAN];    /**< channel mapping, set to {GPIO_UNDEF, 0}
-                                     *   if not used */
+    pwm_chan_t chan[TIMER_CHANNEL_NUMOF]; /**< channel mapping
+                                           *   set to {GPIO_UNDEF, 0}
+                                           *   if not used */
     gpio_af_t af;                   /**< alternate function used */
     uint8_t bus;                    /**< APB bus */
 } pwm_conf_t;
@@ -532,6 +552,13 @@ typedef enum {
     STM32_USART,            /**< STM32 USART module type */
     STM32_LPUART,           /**< STM32 Low-power UART (LPUART) module type */
 } uart_type_t;
+
+/**
+ * @brief   Size of the UART TX buffer for non-blocking mode.
+ */
+#ifndef UART_TXBUF_SIZE
+#define UART_TXBUF_SIZE    (64)
+#endif
 
 #ifndef DOXYGEN
 /**
@@ -608,7 +635,7 @@ typedef struct {
 #endif
 #endif
 #if defined(CPU_FAM_STM32L0) || defined(CPU_FAM_STM32L4) || \
-    defined(CPU_FAM_STM32WB)
+    defined(CPU_FAM_STM32WB) || defined(CPU_FAM_STM32G4)
     uart_type_t type;       /**< hardware module type (USART or LPUART) */
     uint32_t clk_src;       /**< clock source used for UART */
 #endif
@@ -658,7 +685,8 @@ typedef enum {
     I2C_SPEED_FAST,         /**< fast mode:    ~400kbit/s */
 #if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32F3) || \
     defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L0) || \
-    defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB)
+    defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB) || \
+    defined(CPU_FAM_STM32G4)
     I2C_SPEED_FAST_PLUS,    /**< fast plus mode: ~1Mbit/s */
 #endif
 } i2c_speed_t;
@@ -691,7 +719,8 @@ typedef struct {
 
 #if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32F3) || \
     defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L0) || \
-    defined(CPU_FAM_STM32L4) ||  defined(CPU_FAM_STM32WB)
+    defined(CPU_FAM_STM32L4) ||  defined(CPU_FAM_STM32WB) || \
+    defined(CPU_FAM_STM32G4)
 /**
  * @brief   Structure for I2C timing register settings
  *
@@ -918,14 +947,37 @@ void dma_wait(dma_t dma);
 int dma_configure(dma_t dma, int chan, const volatile void *src, volatile void *dst, size_t len,
                   dma_mode_t mode, uint8_t flags);
 
+/**
+ * @brief   Low level initial DMA stream configuration
+ *
+ * This function is supposed to be used together with @ref dma_prepare. This
+ * function sets up the one-time configuration of a stream and @ref dma_prepare
+ * configures the per-transfer registers.
+ *
+ * @param[in]   dma         Logical DMA stream
+ * @param[in]   chan        DMA channel (on stm32f2/4/7, CxS or unused on others)
+ * @param[in]   periph_addr Peripheral register address
+ * @param[in]   mode        DMA direction mode
+ * @param[in]   width       DMA transfer width
+ * @param[in]   inc_periph  Increment peripheral address after read/write
+ */
+void dma_setup(dma_t dma, int chan, void *periph_addr, dma_mode_t mode,
+               uint8_t width, bool inc_periph);
+
+/**
+ * @brief   Low level DMA transfer configuration
+ *
+ * @param[in]   dma         Logical DMA stream
+ * @param[in]   mem         Memory address
+ * @param[in]   len         Transfer length
+ * @param[in]   inc_mem     Increment the memory address after read/write
+ */
+void dma_prepare(dma_t dma, void *mem, size_t len, bool incr_mem);
+
 #endif /* MODULE_PERIPH_DMA */
 
 #ifdef MODULE_PERIPH_CAN
 #include "candev_stm32.h"
-#endif
-
-#ifdef MODULE_PERIPH_USBDEV
-#include "usbdev_stm32.h"
 #endif
 
 /**

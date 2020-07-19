@@ -32,20 +32,11 @@ USEMODULE += mtd
 USEMODULE += vfs
 
 # Use a file system
-USEMODULE += littlefs
+# USEMODULE += littlefs
+USEMODULE += littlefs2
 # USEMODULE += spiffs
 # USEMODULE += fatfs_vfs
 USEMODULE += constfs
 # USEMODULE += devfs
-
-# Set file systems specific variables
-ifneq (,$(filter littlefs, $(USEMODULE)))
-    CFLAGS += -DVFS_FILE_BUFFER_SIZE=56 -DVFS_DIR_BUFFER_SIZE=44
-else ifneq (,$(filter spiffs, $(USEMODULE)))
-    SPIFFS_NB_FD ?= 8
-    CFLAGS += '-DSPIFFS_FS_FD_SPACE_SIZE=(32 * $(SPIFFS_NB_FD))'
-else ifneq (,$(filter fatfs_vfs, $(USEMODULE)))
-    CFLAGS += -DVFS_FILE_BUFFER_SIZE=72 -DVFS_DIR_BUFFER_SIZE=44
-endif
 
 include $(RIOTBASE)/Makefile.include
