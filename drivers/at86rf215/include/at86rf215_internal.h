@@ -14,7 +14,6 @@
  * @brief       Low-Level functions for the AT86RF215 driver
  *
  * @author      Benjamin Valentin <benjamin.valentin@ml-pa.com>
- * @}
  */
 
 #ifndef AT86RF215_INTERNAL_H
@@ -23,6 +22,7 @@
 #include <stdint.h>
 #include "at86rf215.h"
 #include "at86rf215_registers.h"
+#include "board.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +31,9 @@ extern "C" {
 /**
  * @brief Minimum reset pulse width (tRST) in µs
  */
-#define AT86RF215_RESET_PULSE_WIDTH_US  (16U)
+#ifndef CONFIG_AT86RF215_RESET_PULSE_WIDTH_US
+#define CONFIG_AT86RF215_RESET_PULSE_WIDTH_US  (16U)
+#endif
 
 /**
  * @brief The typical transition time to TRX_OFF after reset (tPOWERON) in µs
@@ -136,6 +138,63 @@ void at86rf215_filter_ack(at86rf215_t *dev, bool on);
  * @param[in]  len      number of random bytes to store in data
  */
 void at86rf215_get_random(at86rf215_t *dev, void *data, size_t len);
+
+/**
+ * @brief   Configure the radio to make use of OFDM modulation.
+ *          There are 4 OFDM options, each with a different number of active tones.
+ *          The device supports BPSK, QPSK and 16-QAM modulation and coding schemes (MCS)
+ *
+ * @param[in] dev       device to configure
+ * @param[in] option    modulation option, each increment halves the data rate
+ * @param[in] mcs       modulation scheme, `BB_MCS_BPSK_REP4` … `BB_MCS_16QAM_3BY4`
+ *
+ * @return              0 on success, error otherwise
+ */
+int at86rf215_configure_OFDM(at86rf215_t *dev, uint8_t option, uint8_t mcs);
+
+/**
+ * @brief   Set the current modulation and coding scheme (MCS)
+ *
+ * @param[in] dev       device to configure
+ * @param[in] mcs       modulation and coding scheme
+ *
+ * @return              0 on success, error otherwise
+ */
+int at86rf215_OFDM_set_scheme(at86rf215_t *dev, uint8_t mcs);
+
+/**
+ * @brief   Get the current modulation and coding scheme (MCS)
+ *
+ * @param[in] dev       device to read from
+ *
+ * @return              the current modulation & coding scheme
+ */
+uint8_t at86rf215_OFDM_get_scheme(at86rf215_t *dev);
+
+/**
+ * @brief   Set the current OFDM option
+ *
+ * @param[in] dev       device to configure
+ * @param[in] option    OFDM option
+ *
+ * @return              0 on success, error otherwise
+ */
+int at86rf215_OFDM_set_option(at86rf215_t *dev, uint8_t option);
+
+/**
+ * @brief   Get the current OFDM option
+ *
+ * @param[in] dev       device to read from
+ *
+ * @return              the current OFDM option
+ */
+uint8_t at86rf215_OFDM_get_option(at86rf215_t *dev);
+
+/**
+ * @ingroup     drivers_at86rf215
+ * @defgroup    drivers_at86rf215_oqpsk     AT86RF215 MR-O-QPSK PHY
+ * @{
+ */
 
 /**
  * @brief   Configure the radio to make use of O-QPSK modulation.
@@ -454,15 +513,6 @@ void at86rf215_disable_rpc(at86rf215_t *dev);
  * @param[in] dev           device to configure
  */
 void at86rf215_enable_rpc(at86rf215_t *dev);
-
-/**
- * @brief Notify the driver and stack about a change in transmission mode
- *        which may result in a change of PDU.
- *
- * @param[in] dev           device that changed it's mode
- * @param[in] new_mode      the new transmission mode
- */
-bool at86rf215_switch_mode(at86rf215_t *dev, uint8_t new_mode);
 
 /**
  * @brief Checks whether the device operates in the sub-GHz band.

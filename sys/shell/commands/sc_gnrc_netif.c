@@ -191,6 +191,10 @@ static void _set_usage(char *cmd_name)
          "       * \"chip_rate\" - BPSK/QPSK chip rate in kChip/s\n"
          "       * \"rate_mode\" - BPSK/QPSK rate mode\n"
 #endif
+#ifdef MODULE_NETDEV_IEEE802154_MR_OFDM
+         "       * \"option\" - OFDM option\n"
+         "       * \"scheme\" - OFDM modulation & coding scheme\n"
+#endif
          "       * \"power\" - TX power in dBm\n"
          "       * \"retrans\" - max. number of retransmissions\n"
          "       * \"src_len\" - sets the source address length in byte\n"
@@ -346,6 +350,17 @@ static void _print_netopt(netopt_t opt)
             break;
 
 #endif /* MODULE_NETDEV_IEEE802154_MR_OQPSK */
+#ifdef MODULE_NETDEV_IEEE802154_MR_OFDM
+
+        case NETOPT_MR_OFDM_OPTION:
+            printf("OFDM option");
+            break;
+
+        case NETOPT_MR_OFDM_MCS:
+            printf("modulation/coding scheme");
+            break;
+
+#endif /* MODULE_NETDEV_IEEE802154_MR_OFDM */
 
         case NETOPT_CHECKSUM:
             printf("checksum");
@@ -411,6 +426,18 @@ static const char *_netopt_ieee802154_phy_str[] = {
     [IEEE802154_PHY_MR_OQPSK] = "MR-O-QPSK",
     [IEEE802154_PHY_MR_OFDM] = "MR-OFDM",
     [IEEE802154_PHY_MR_FSK] = "MR-FSK"
+};
+#endif
+
+#ifdef MODULE_NETDEV_IEEE802154_MR_OFDM
+static const char *_netopt_ofdm_mcs_str[] = {
+    [0] = "BPSK, rate 1/2, 4x frequency repetition",
+    [1] = "BPSK, rate 1/2, 2x frequency repetition",
+    [2] = "QPSK, rate 1/2, 2x frequency repetition",
+    [3] = "QPSK, rate 1/2",
+    [4] = "QPSK, rate 3/4",
+    [5] = "16-QAM, rate 1/2",
+    [6] = "16-QAM, rate 3/4",
 };
 #endif
 
@@ -504,6 +531,7 @@ static void _netif_list(netif_t *iface)
     uint16_t u16;
     int16_t i16;
     uint8_t u8;
+    int8_t i8;
     int res;
     netopt_state_t state;
     unsigned line_thresh = 1;
@@ -512,6 +540,7 @@ static void _netif_list(netif_t *iface)
     _print_iface_name(iface);
     printf(" ");
 
+    /* XXX divide options and flags by at least two spaces! */
     res = netif_get_opt(iface, NETOPT_ADDRESS, 0, hwaddr, sizeof(hwaddr));
     if (res >= 0) {
         char hwaddr_str[res * 3];
@@ -533,6 +562,10 @@ static void _netif_list(netif_t *iface)
     res = netif_get_opt(iface, NETOPT_NID, 0, &u16, sizeof(u16));
     if (res >= 0) {
         printf(" NID: 0x%" PRIx16 " ", u16);
+    }
+    res = netif_get_opt(iface, NETOPT_RSSI, 0, &i8, sizeof(i8));
+    if (res >= 0) {
+        printf(" RSSI: %d ", i8);
     }
 #ifdef MODULE_GNRC_NETIF_CMD_LORA
     res = netif_get_opt(iface, NETOPT_BANDWIDTH, 0, &u8, sizeof(u8));
@@ -580,6 +613,20 @@ static void _netif_list(netif_t *iface)
             break;
 
 #endif /* MODULE_NETDEV_IEEE802154_MR_OQPSK */
+#ifdef MODULE_NETDEV_IEEE802154_MR_OFDM
+        case IEEE802154_PHY_MR_OFDM:
+            printf("\n          ");
+            res = netif_get_opt(iface, NETOPT_MR_OFDM_OPTION, 0, &u8, sizeof(u8));
+            if (res >= 0) {
+                printf(" Option: %u ", u8);
+            }
+            res = netif_get_opt(iface, NETOPT_MR_OFDM_MCS, 0, &u8, sizeof(u8));
+            if (res >= 0) {
+                printf(" MCS: %u (%s) ", u8, _netopt_ofdm_mcs_str[u8]);
+            }
+
+            break;
+#endif /* MODULE_NETDEV_IEEE802154_MR_OFDM */
         }
     }
 #endif /* MODULE_NETDEV_IEEE802154 */
@@ -632,6 +679,7 @@ static void _netif_list(netif_t *iface)
         line_thresh++;
     }
 #endif
+    /* XXX divide options and flags by at least two spaces! */
     line_thresh = _newline(0U, line_thresh);
     line_thresh = _netif_list_flag(iface, NETOPT_PROMISCUOUSMODE, "PROMISC  ",
                                    line_thresh);
@@ -648,19 +696,20 @@ static void _netif_list(netif_t *iface)
     line_thresh = _netif_list_flag(iface, NETOPT_CSMA, "CSMA  ",
                                    line_thresh);
     line_thresh += _LINE_THRESHOLD + 1; /* enforce linebreak after this option */
-    line_thresh = _netif_list_flag(iface, NETOPT_AUTOCCA, "AUTOCCA ",
+    line_thresh = _netif_list_flag(iface, NETOPT_AUTOCCA, "AUTOCCA  ",
                                    line_thresh);
-    line_thresh = _netif_list_flag(iface, NETOPT_IQ_INVERT, "IQ_INVERT ",
+    line_thresh = _netif_list_flag(iface, NETOPT_IQ_INVERT, "IQ_INVERT  ",
                                    line_thresh);
-    line_thresh = _netif_list_flag(iface, NETOPT_SINGLE_RECEIVE, "RX_SINGLE ",
+    line_thresh = _netif_list_flag(iface, NETOPT_SINGLE_RECEIVE, "RX_SINGLE  ",
                                    line_thresh);
-    line_thresh = _netif_list_flag(iface, NETOPT_CHANNEL_HOP, "CHAN_HOP ",
+    line_thresh = _netif_list_flag(iface, NETOPT_CHANNEL_HOP, "CHAN_HOP  ",
                                    line_thresh);
-    line_thresh = _netif_list_flag(iface, NETOPT_OTAA, "OTAA ",
+    line_thresh = _netif_list_flag(iface, NETOPT_OTAA, "OTAA  ",
                                    line_thresh);
+    /* XXX divide options and flags by at least two spaces! */
     res = netif_get_opt(iface, NETOPT_MAX_PDU_SIZE, 0, &u16, sizeof(u16));
     if (res > 0) {
-        printf("L2-PDU:%" PRIu16 " ", u16);
+        printf("L2-PDU:%" PRIu16 "  ", u16);
         line_thresh++;
     }
 #ifdef MODULE_GNRC_IPV6
@@ -691,6 +740,7 @@ static void _netif_list(netif_t *iface)
 #endif
 #endif
     res = netif_get_opt(iface, NETOPT_SRC_LEN, 0, &u16, sizeof(u16));
+    /* XXX divide options and flags by at least two spaces before this line! */
     if (res >= 0) {
         printf("Source address length: %" PRIu16, u16);
         line_thresh++;
@@ -1300,6 +1350,14 @@ static int _netif_set(char *cmd_name, netif_t *iface, char *key, char *value)
         return _netif_set_u8(iface, NETOPT_MR_OQPSK_RATE, 0, value);
     }
 #endif /* MODULE_NETDEV_IEEE802154_MR_OQPSK */
+#ifdef MODULE_NETDEV_IEEE802154_MR_OFDM
+    else if ((strcmp("option", key) == 0) || (strcmp("opt", key) == 0)) {
+        return _netif_set_u8(iface, NETOPT_MR_OFDM_OPTION, 0, value);
+    }
+    else if ((strcmp("scheme", key) == 0) || (strcmp("mcs", key) == 0)) {
+        return _netif_set_u8(iface, NETOPT_MR_OFDM_MCS, 0, value);
+    }
+#endif /* MODULE_NETDEV_IEEE802154_MR_OFDM */
     else if ((strcmp("channel", key) == 0) || (strcmp("chan", key) == 0)) {
         return _netif_set_u16(iface, NETOPT_CHANNEL, 0, value);
     }

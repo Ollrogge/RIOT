@@ -1,4 +1,4 @@
-CPU_ARCH = cortex-m4f
+CPU_CORE = cortex-m4f
 CPU_FAM  = nrf52
 
 # The ADC does not depend on any board configuration, so always available
@@ -11,4 +11,4 @@ FEATURES_PROVIDED += ble_nimble_netif
 # all nrf52 have an MPU
 FEATURES_PROVIDED += cortexm_mpu
 
--include $(RIOTCPU)/nrf5x_common/Makefile.features
+include $(RIOTCPU)/nrf5x_common/Makefile.features

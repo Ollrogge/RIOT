@@ -6,16 +6,16 @@ ifneq (,$(filter saul_init,$(USEMODULE)))
   DIRS += saul
 endif
 
-ifneq (,$(filter auto_init_storage,$(USEMODULE)))
-  DIRS += storage
-endif
-
 ifneq (,$(filter auto_init_can,$(USEMODULE)))
   DIRS += can
 endif
 
 ifneq (,$(filter auto_init_loramac,$(USEMODULE)))
   DIRS += loramac
+endif
+
+ifneq (,$(filter auto_init_multimedia,$(USEMODULE)))
+  DIRS += multimedia
 endif
 
 ifneq (,$(filter auto_init_usbus,$(USEMODULE)))
