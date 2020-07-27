@@ -25,7 +25,7 @@
 #include "usb/usbus/hid.h"
 #include "tsrb.h"
 
-#define ENABLE_DEBUG    (1)
+#define ENABLE_DEBUG    (0)
 #include "debug.h"
 
 static void _init(usbus_t *usbus, usbus_handler_t *handler);
