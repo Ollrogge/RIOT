@@ -4,7 +4,7 @@ include ../Makefile.tests_common
 
 USEMODULE += usbus
 USEMODULE += usbus_hid
-USEMODULE += stdio_hid
+USEMODULE += io_hid
 USEMODULE += xtimer
 USEMODULE += isrpipe
 

@@ -971,10 +971,6 @@ ifneq (,$(filter usbus_hid,$(USEMODULE)))
   USEMODULE += usbus
 endif
 
-ifneq (,$(filter ctaphid,$(USEMODULE)))
-  USEMODULE += isrpipe_read_timeout
-endif
-
 ifneq (,$(filter usbus_cdc_ecm,$(USEMODULE)))
   USEMODULE += iolist
   USEMODULE += fmt
