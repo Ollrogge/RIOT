@@ -15,6 +15,9 @@
 include $(RIOTBASE)/sys/Makefile.dep
 include $(RIOTBASE)/drivers/Makefile.dep
 
+# pull Makefile.dep of each driver modules if they exist
+-include $(sort $(USEMODULE:%=$(RIOTBASE)/drivers/%/Makefile.dep))
+
 # pull dependencies from packages
 -include $(USEPKG:%=$(RIOTPKG)/%/Makefile.dep)
 
@@ -617,6 +620,7 @@ ifneq (,$(filter cpp11-compat,$(USEMODULE)))
   USEMODULE += xtimer
   USEMODULE += timex
   FEATURES_REQUIRED += cpp
+  FEATURES_REQUIRED += libstdcpp
 endif
 
 ifneq (,$(filter gnrc,$(USEMODULE)))
@@ -1100,6 +1104,11 @@ FEATURES_REQUIRED += $(filter cpu_core_%,$(FEATURES_PROVIDED))
 
 # don't use idle thread if architecture has needed support
 FEATURES_OPTIONAL += no_idle_thread
+
+ifneq (,$(filter libstdcpp,$(FEATURES_USED)))
+  # Also use C++ if libstdc++ is used
+  FEATURES_REQUIRED += cpp
+endif
 
 ifneq (,$(filter ecc_%,$(USEMODULE)))
   USEMODULE += ecc

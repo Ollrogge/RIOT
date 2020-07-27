@@ -23,28 +23,32 @@
 
 #include "cpu_conf_common.h"
 
-#if CPU_FAM_STM32F0
-#include "vendor/stm32f0xx.h"
+#if defined(CPU_LINE_STM32F030x4)
+#include "vendor/stm32f030x4.h"
+#elif CPU_FAM_STM32F0
+#include "stm32f0xx.h"
 #elif CPU_FAM_STM32F1
-#include "vendor/stm32f1xx.h"
+#include "stm32f1xx.h"
 #elif CPU_FAM_STM32F2
-#include "vendor/stm32f2xx.h"
+#include "stm32f2xx.h"
 #elif CPU_FAM_STM32F3
-#include "vendor/stm32f3xx.h"
+#include "stm32f3xx.h"
 #elif CPU_FAM_STM32F4
-#include "vendor/stm32f4xx.h"
+#include "stm32f4xx.h"
 #elif CPU_FAM_STM32F7
-#include "vendor/stm32f7xx.h"
+#include "stm32f7xx.h"
+#elif CPU_FAM_STM32G0
+#include "stm32g0xx.h"
 #elif CPU_FAM_STM32G4
-#include "vendor/stm32g4xx.h"
+#include "stm32g4xx.h"
 #elif CPU_FAM_STM32L0
-#include "vendor/stm32l0xx.h"
+#include "stm32l0xx.h"
 #elif CPU_FAM_STM32L1
-#include "vendor/stm32l1xx.h"
+#include "stm32l1xx.h"
 #elif CPU_FAM_STM32L4
-#include "vendor/stm32l4xx.h"
+#include "stm32l4xx.h"
 #elif CPU_FAM_STM32WB
-#include "vendor/stm32wbxx.h"
+#include "stm32wbxx.h"
 #else
 #error Not supported CPU family
 #endif
@@ -117,6 +121,8 @@ extern "C" {
 #define CPU_IRQ_NUMOF                   (82U)
 #elif defined(CPU_MODEL_STM32WB55RG)
 #define CPU_IRQ_NUMOF                   (63U)
+#elif defined(CPU_MODEL_STM32G070RB)
+#define CPU_IRQ_NUMOF                   (30U)
 #else
 #error Number of IRQs not configured for this CPU
 #endif
@@ -132,7 +138,7 @@ extern "C" {
 #elif defined(CPU_LINE_STM32F091xC) || defined(CPU_LINE_STM32F072xB) \
    || defined(CPU_LINE_STM32F030xC) || defined(CPU_LINE_STM32F103xE) \
    || defined(CPU_FAM_STM32F3) || defined(CPU_FAM_STM32L4) \
-   || defined(CPU_FAM_STM32G4)
+   || defined(CPU_FAM_STM32G4) || defined(CPU_FAM_STM32G0)
 #define FLASHPAGE_SIZE                  (2048U)
 #elif defined(CPU_LINE_STM32F051x8) || defined(CPU_LINE_STM32F042x6) \
    || defined(CPU_LINE_STM32F070xB) || defined(CPU_LINE_STM32F030x8) \
@@ -151,7 +157,7 @@ extern "C" {
  * However, the erase block is always FLASHPAGE_SIZE.
  */
 #if defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB) || \
-    defined(CPU_FAM_STM32G4)
+    defined(CPU_FAM_STM32G4) || defined(CPU_FAM_STM32G0)
 #define FLASHPAGE_RAW_BLOCKSIZE         (8U)
 #elif defined(CPU_FAM_STM32L0) || defined(CPU_FAM_STM32L1)
 #define FLASHPAGE_RAW_BLOCKSIZE         (4U)
@@ -160,7 +166,7 @@ extern "C" {
 #endif
 
 #if defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32WB) || \
-    defined(CPU_FAM_STM32G4)
+    defined(CPU_FAM_STM32G4) || defined(CPU_FAM_STM32G0)
 #define FLASHPAGE_RAW_ALIGNMENT         (8U)
 #else
 /* Writing should be always 4 bytes aligned */
