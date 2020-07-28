@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2020 Nils Ollrogge
  *
@@ -81,10 +80,9 @@ size_t usbus_hid_submit(usbus_hid_device_t* hid, const uint8_t *buf, size_t len)
     unsigned int old;
 
     old = irq_disable();
-
     n = tsrb_add(&hid->tsrb, buf, len);
-
     irq_restore(old);
+
     return n;
 }
 
@@ -132,6 +130,10 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     hid->hid_descr.funcs = &_hid_descriptor;
     hid->hid_descr.arg = hid;
 
+    /*
+    Configure Interface as USB_HID interface, choosing NONE for subclass and
+    protocol in order to represent a generic I/O device
+    */
     hid->iface.class = USB_CLASS_HID;
     hid->iface.subclass = USB_HID_SUBCLASS_NONE;
     hid->iface.protocol = USB_HID_PROTOCOL_NONE;
@@ -143,6 +145,7 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
                                               USB_EP_DIR_IN,
                                               CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
 
+    /* interrupt endpoint polling rate */
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);
 
@@ -150,6 +153,8 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
                             USB_EP_TYPE_INTERRUPT, USB_EP_DIR_OUT,
                             CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
 
+
+    /* interrupt endpoint polling rate */
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);
 
@@ -181,9 +186,11 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     DEBUG("USB_HID: request: %d type: %d value: %d length: %d state: %d \n",
           setup->request, setup->type, setup->value >> 8, setup->length, state);
 
+    /* Requests defined in USB HID 1.11 spec section 7 */
     switch (setup->request) {
-        case USB_SETUP_REQ_GET_DESCRIPTOR:
-            if (setup->value >> 8 == USB_HID_DESCR_REPORT) {
+        case USB_SETUP_REQ_GET_DESCRIPTOR: {
+            uint8_t desc_type = setup->value >> 8;
+            if (desc_type == USB_HID_DESCR_REPORT) {
                 usbus_control_slicer_put_bytes(usbus, hid->report_desc,
                                                hid->report_desc_size);
             }
@@ -191,6 +198,7 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
                 _gen_hid_descriptor(usbus, NULL);
             }
             break;
+        }
         case USB_HID_REQUEST_GET_REPORT:
             break;
         case USB_HID_REQUEST_GET_IDLE:

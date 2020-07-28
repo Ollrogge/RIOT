@@ -96,6 +96,8 @@ extern "C" {
 
 /**
  * @brief USB HID descriptor struct
+ *
+ * @see USB HID 1.11 spec section 6.2.1
  */
 typedef struct __attribute__((packed)){
     uint8_t length;         /**< Numeric expression that is the total size of the HID descriptor */
@@ -136,8 +138,8 @@ struct usbus_hid_device {
     usbus_handler_t handler_ctrl;   /**< control handler */
     usbus_interface_t iface;        /**< HID interface */
     usbus_descr_gen_t hid_descr;    /**< HID descriptor generator */
-    uint8_t *report_desc;           /**< report desc reference */
-    size_t report_desc_size;        /**< report desc size */
+    uint8_t *report_desc;           /**< report descriptor reference */
+    size_t report_desc_size;        /**< report descriptor size */
     usbus_t *usbus;                 /**< USBUS reference */
     tsrb_t tsrb;                    /**< TSRB for data to the host */
     size_t occupied;                /**< Number of bytes for the host */
@@ -149,9 +151,8 @@ struct usbus_hid_device {
  * @brief Initialize an USBUS HID interface
  *
  * @param[in]   usbus               USBUS context to register with
- * @param[in]   cdcacm              USBUS CDC ACM handler
+ * @param[in]   hid                 USBUS HID handler
  * @param[in]   cb                  Callback for data from the USB interface
- * @param[in]   coding_cb           Callback for control settings
  * @param[in]   buf                 Buffer for data to the USB interface
  * @param[in]   len                 Size in bytes of the buffer
  * @param[in]   report_desc         USB_HID report descriptor
@@ -165,7 +166,7 @@ void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,
 /**
  * @brief Submit bytes to the HID handler
  *
- * @param[in]   cdcacm      USBUS HID handler context
+ * @param[in]   hid         USBUS HID handler context
  * @param[in]   buf         buffer to submit
  * @param[in]   len         length of the submitted buffer
  *
