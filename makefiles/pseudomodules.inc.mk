@@ -110,6 +110,7 @@ PSEUDOMODULES += stdin
 PSEUDOMODULES += stdio_ethos
 PSEUDOMODULES += stdio_cdc_acm
 PSEUDOMODULES += io_hid
+PSEUDOMODULES += ctap_hid
 PSEUDOMODULES += stdio_uart_rx
 PSEUDOMODULES += suit_transport_%
 PSEUDOMODULES += wakaama_objects_%
