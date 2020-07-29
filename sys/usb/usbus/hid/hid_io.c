@@ -20,6 +20,7 @@
 
 #include "isrpipe.h"
 #include "isrpipe/read_timeout.h"
+
 #include "usb/usbus.h"
 #include "usb/usbus/hid.h"
 
@@ -51,7 +52,7 @@ ssize_t usb_hid_stdio_write(const void *buffer, size_t size)
 
         buffer = (char *)buffer + n;
         size -= n;
-    } while(size);
+    } while (size);
 
     return start - (char *)buffer;
 }

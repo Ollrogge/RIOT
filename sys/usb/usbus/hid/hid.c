@@ -153,7 +153,6 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
                             USB_EP_TYPE_INTERRUPT, USB_EP_DIR_OUT,
                             CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
 
-
     /* interrupt endpoint polling rate */
     ep->interval = 0x05;
     usbus_enable_endpoint(ep);

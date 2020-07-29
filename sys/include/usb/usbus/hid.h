@@ -24,8 +24,8 @@
  * @author      Nils Ollrogge <nils-ollrogge@outlook.de>
  */
 
-#ifndef USB_HID_H
-#define USB_HID_H
+#ifndef USB_USBUS_HID_H
+#define USB_USBUS_HID_H
 
 #include <stdint.h>
 #include "usb/usbus.h"
@@ -76,7 +76,6 @@ extern "C" {
  */
 #define USB_HID_COUNTRY_CODE_NOTSUPPORTED 0x00
 
-
 /**
  * @brief USB HID interrupt endpoint size
  */
@@ -111,12 +110,10 @@ typedef struct __attribute__((packed)){
     uint16_t report_length; /**< the total size of the Report descriptor. */
 } usb_desc_hid_t;
 
-
 /**
  * @brief USBUS HID context struct forward declaration
  */
 typedef struct usbus_hid_device usbus_hid_device_t;
-
 
 /**
  * @brief HID data callback.
@@ -129,7 +126,6 @@ typedef struct usbus_hid_device usbus_hid_device_t;
  */
 typedef void (*usbus_hid_cb_t)(usbus_hid_device_t *hid, uint8_t *data,
                                size_t len);
-
 
 /**
  * @brief USBUS HID context struct
@@ -156,7 +152,7 @@ struct usbus_hid_device {
  * @param[in]   buf                 Buffer for data to the USB interface
  * @param[in]   len                 Size in bytes of the buffer
  * @param[in]   report_desc         USB_HID report descriptor
- * @param[in]   report_desc size    Size of USB_HID report descriptor
+ * @param[in]   report_desc_size    Size of USB_HID report descriptor
  */
 void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,
                            usbus_hid_cb_t cb,
@@ -187,4 +183,5 @@ void usbus_hid_flush(usbus_hid_device_t *hid);
 }
 #endif
 
-#endif
+#endif /* USB_USBUS_HID_H */
+/** @} */

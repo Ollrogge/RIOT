@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2020 Nils Ollrogge
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup     unittests
+ * @brief
+ * @{
+ *
+ * @brief       Tests for USB HID
+ *
+ * @author      Nils Ollrogge <nils-ollrogge@outlook.de>
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,7 +24,7 @@
 #include "usb/usbus/hid.h"
 
 /*
-this descriptor is used, because the basic usb_hid interface was developed in conjunction with FIDO.
+this descriptor is used, because the basic usb_hid interface was developed in conjunction with FIDO2.
 Descriptor is taken from CTAP specification (version 20190130) section 8.1.8.2
 */
 static uint8_t report_desc_ctap[] = {
