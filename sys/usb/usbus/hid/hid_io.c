@@ -42,7 +42,7 @@ int usb_hid_io_read_timeout(void *buffer, size_t size, uint32_t timeout)
     return isrpipe_read_timeout(&_hid_stdio_isrpipe, buffer, size, timeout);
 }
 
-ssize_t usb_hid_stdio_write(const void *buffer, size_t size)
+ssize_t usb_hid_io_write(const void *buffer, size_t size)
 {
     const char *start = buffer;
 
@@ -72,4 +72,3 @@ void usb_hid_io_init(usbus_t *usbus, uint8_t *report_desc,
                           sizeof(_hid_tx_buf_mem), report_desc,
                           report_desc_size);
 }
-
