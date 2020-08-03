@@ -968,6 +968,7 @@ ifneq (,$(filter usbus_cdc_acm,$(USEMODULE)))
 endif
 
 ifneq (,$(filter usbus_hid,$(USEMODULE)))
+  USEMODULE += isrpipe_read_timeout
   USEMODULE += usbus
 endif
 
