@@ -99,12 +99,16 @@ extern "C" {
  * @see USB HID 1.11 spec section 6.2.1
  */
 typedef struct __attribute__((packed)){
-    uint8_t length;         /**< Numeric expression that is the total size of the HID descriptor */
-    uint8_t desc_type;      /**< Constant name specifying type of HID descriptor. */
+    uint8_t length;         /**< Numeric expression that is the total size of
+                                 the HID descriptor */
+    uint8_t desc_type;      /**< Constant name specifying type of HID descriptor.*/
 
-    uint16_t bcd_hid;       /**< Numeric expression identifying the HID Class Specification release */
-    uint8_t country_code;   /**< Numeric expression identifying country code of the localized hardware.  */
-    uint8_t num_descrs;     /**< Numeric expression specifying the number of class descriptors */
+    uint16_t bcd_hid;       /**< Numeric expression identifying the HID Class
+                                 Specification release */
+    uint8_t country_code;   /**< Numeric expression identifying country code of
+                                 the localized hardware.  */
+    uint8_t num_descrs;     /**< Numeric expression specifying the number of
+                                 class descriptors */
 
     uint8_t report_type;    /**< Type of HID class report. */
     uint16_t report_length; /**< the total size of the Report descriptor. */
@@ -177,7 +181,6 @@ size_t usbus_hid_submit(usbus_hid_device_t *hid, const uint8_t *buf,
  * @param[in]   hid      USBUS HID handler context
  */
 void usbus_hid_flush(usbus_hid_device_t *hid);
-
 
 #ifdef __cplusplus
 }
