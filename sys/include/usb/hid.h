@@ -7,19 +7,14 @@
  */
 
 /**
- * @defgroup    usbus_hid USBUS HID
+ * @defgroup    usb_hid   HID - USB communications device class
  * @ingroup     usb
- * @brief       USBUS HID interface module
+ * @brief       Generic USB HID defines and helpers
  *
  * @{
  *
  * @file
- * @brief       Interface and definitions for USB HID type interfaces in
- *              USBUS.
- *
- *              The functionality provided here only implements the USB
- *              specific handling. A different module is required to provide
- *              functional handling of the data e.g. UART or STDIO integration.
+ * @brief       Definition for USB HID interfaces
  *
  * @author      Nils Ollrogge <nils-ollrogge@outlook.de>
  */
