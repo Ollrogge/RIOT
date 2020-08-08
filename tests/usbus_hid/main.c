@@ -25,7 +25,7 @@
 
 /*
 this descriptor is used, because the basic usb_hid interface was developed in
-conjunction with FIDO2. Descriptor is taken from CTAP specification
+conjunction with FIDO2. Descriptor is taken from CTAP2 specification
 (version 20190130) section 8.1.8.2
 */
 static uint8_t report_desc_ctap[] = {
@@ -65,6 +65,7 @@ void init(void)
 
 int main(void)
 {
+  /* sleep to wait for Pyterm attaching in order to see puts messages */
   xtimer_sleep(3);
   init();
   puts("RIOT USB HID echo test");
