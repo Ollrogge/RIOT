@@ -171,7 +171,7 @@ static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
 
     switch (event) {
         default:
-            DEBUG("USB HID unhandeled event: 0x%x\n", event);
+            DEBUG("USB HID unhandled event: 0x%x\n", event);
             break;
     }
 }
