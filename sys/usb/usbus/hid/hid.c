@@ -36,8 +36,7 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
 static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
                               usbdev_ep_t *ep, usbus_event_transfer_t event);
 
-static void _handle_flush(event_t *ev);
-static void _handle_in(usbus_hid_device_t *hid, usbdev_ep_t *ep);
+static void _handle_tx_ready(event_t *ev);
 
 static const usbus_handler_driver_t hid_driver = {
     .init = _init,
@@ -74,42 +73,22 @@ static size_t _gen_hid_descriptor(usbus_t *usbus, void *arg)
     return sizeof(usb_desc_hid_t);
 }
 
-size_t usbus_hid_submit(usbus_hid_device_t* hid, const uint8_t *buf, size_t len)
+static void _handle_tx_ready(event_t *ev)
 {
-    size_t n;
-    unsigned int old;
+    usbus_hid_device_t *hid = container_of(ev, usbus_hid_device_t, tx_ready);
 
-    old = irq_disable();
-    n = tsrb_add(&hid->tsrb, buf, len);
-    irq_restore(old);
+    /* todo: use mutex to lock hid tx ? */
 
-    return n;
+    /* linked list ep at index 1 is IN */
+    usbdev_ep_ready(hid->iface.ep->next->ep, hid->occupied);
 }
 
-void usbus_hid_flush(usbus_hid_device_t *hid)
-{
-    if (hid->usbus) {
-        usbus_event_post(hid->usbus, &hid->flush);
-    }
-}
-
-static void _handle_flush(event_t *ev)
-{
-    usbus_hid_device_t *hid = container_of(ev, usbus_hid_device_t, flush);
-
-    if (hid->occupied == 0) {
-        _handle_in(hid, hid->iface.ep->next->ep);
-    }
-}
-
-void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,
-                           usbus_hid_cb_t cb,
-                           uint8_t *buf, size_t len, uint8_t *report_desc,
-                           size_t report_desc_size)
+void usbus_hid_init(usbus_t *usbus, usbus_hid_device_t *hid, usbus_hid_cb_t cb,
+                    uint8_t *report_desc, size_t report_desc_size)
 {
     memset(hid, 0, sizeof(usbus_hid_device_t));
     hid->usbus = usbus;
-    tsrb_init(&hid->tsrb, buf, len);
+    mutex_init(&hid->in_lock);
     hid->handler_ctrl.driver = &hid_driver;
     hid->report_desc = report_desc;
     hid->report_desc_size = report_desc_size;
@@ -124,7 +103,7 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     DEBUG("USB_HID: initialization\n");
     usbus_hid_device_t *hid = (usbus_hid_device_t *)handler;
 
-    hid->flush.handler = _handle_flush;
+    hid->tx_ready.handler = _handle_tx_ready;
 
     hid->hid_descr.next = NULL;
     hid->hid_descr.funcs = &_hid_descriptor;
@@ -224,28 +203,6 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     return 1;
 }
 
-static void _handle_in(usbus_hid_device_t *hid, usbdev_ep_t *ep)
-{
-    if (hid->usbus->state != USBUS_STATE_CONFIGURED) {
-        return;
-    }
-
-    unsigned int old = irq_disable();
-
-    while (!tsrb_empty(&hid->tsrb)) {
-        int c = tsrb_get_one(&hid->tsrb);
-        ep->buf[hid->occupied++] = (uint8_t)c;
-        if (hid->occupied >= CONFIG_USBUS_HID_INTERRUPT_EP_SIZE) {
-            break;
-        }
-    }
-
-    irq_restore(old);
-
-    DEBUG("USB_HID _handle_in %d \n ", hid->occupied);
-    usbdev_ep_ready(ep, hid->occupied);
-}
-
 static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
                               usbdev_ep_t *ep, usbus_event_transfer_t event)
 {
@@ -256,10 +213,8 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
     usbus_hid_device_t *hid = (usbus_hid_device_t *)handler;
 
     if ((ep->dir == USB_EP_DIR_IN) && (ep->type == USB_EP_TYPE_INTERRUPT)) {
+        mutex_unlock(&hid->in_lock);
         hid->occupied = 0;
-        if (!tsrb_empty(&hid->tsrb)) {
-            return _handle_in(hid, ep);
-        }
     }
     else if ((ep->dir == USB_EP_DIR_OUT) &&
              (ep->type == USB_EP_TYPE_INTERRUPT)) {
