@@ -18,6 +18,8 @@
 
 #define USB_H_USER_IS_RIOT_INTERNAL
 
+#include <string.h>
+
 #include "isrpipe.h"
 #include "isrpipe/read_timeout.h"
 
@@ -28,7 +30,6 @@
 #include "debug.h"
 
 static usbus_hid_device_t hid;
-static uint8_t _hid_tx_buf_mem[CONFIG_USBUS_HID_INTERRUPT_EP_SIZE];
 static uint8_t _hid_rx_buf_mem[CONFIG_USBUS_HID_INTERRUPT_EP_SIZE];
 static isrpipe_t _hid_stdio_isrpipe = ISRPIPE_INIT(_hid_rx_buf_mem);
 
@@ -42,19 +43,28 @@ int usb_hid_io_read_timeout(void *buffer, size_t size, uint32_t timeout)
     return isrpipe_read_timeout(&_hid_stdio_isrpipe, buffer, size, timeout);
 }
 
-ssize_t usb_hid_io_write(const void *buffer, size_t size)
+void usb_hid_io_write(const void *buffer, size_t len)
 {
-    const char *start = buffer;
+    uint8_t* buffer_ep = hid.iface.ep->next->ep->buf;
+    uint16_t max_size = hid.iface.ep->maxpacketsize;
+    size_t offset = 0;
 
-    do {
-        size_t n = usbus_hid_submit(&hid, buffer, size);
-        usbus_hid_flush(&hid);
-
-        buffer = (char *)buffer + n;
-        size -= n;
-    } while (size);
-
-    return start - (char *)buffer;
+    while (len) {
+        mutex_lock(&hid.in_lock);
+        if (len > max_size) {
+            memmove(buffer_ep + offset, buffer + offset, max_size);
+            offset += max_size;
+            hid.occupied = max_size;
+            len -= max_size;
+        }
+        else {
+            memmove(buffer_ep + offset, buffer + offset, len);
+            offset += len;
+            hid.occupied = len;
+            len -= len;
+        }
+        usbus_event_post(hid.usbus, &hid.tx_ready);
+    }
 }
 
 static void _hid_rx_pipe(usbus_hid_device_t *hid, uint8_t *data, size_t len)
@@ -68,7 +78,5 @@ static void _hid_rx_pipe(usbus_hid_device_t *hid, uint8_t *data, size_t len)
 void usb_hid_io_init(usbus_t *usbus, uint8_t *report_desc,
                      size_t report_desc_size)
 {
-    usbus_hid_device_init(usbus, &hid, _hid_rx_pipe, _hid_tx_buf_mem,
-                          sizeof(_hid_tx_buf_mem), report_desc,
-                          report_desc_size);
+    usbus_hid_init(usbus, &hid, _hid_rx_pipe,  report_desc, report_desc_size);
 }
