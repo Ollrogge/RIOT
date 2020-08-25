@@ -28,9 +28,10 @@
 #define USB_USBUS_HID_H
 
 #include <stdint.h>
+
 #include "usb/usbus.h"
 #include "usb/hid.h"
-#include "tsrb.h"
+#include "mutex.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,10 +69,10 @@ struct usbus_hid_device {
     uint8_t *report_desc;           /**< report descriptor reference */
     size_t report_desc_size;        /**< report descriptor size */
     usbus_t *usbus;                 /**< USBUS reference */
-    tsrb_t tsrb;                    /**< TSRB for data to the host */
     size_t occupied;                /**< Number of bytes for the host */
-    event_t flush;                  /**< device2host forced flush event  */
     usbus_hid_cb_t cb;              /**< Callback for data handlers */
+    event_t tx_ready;               /**< Transmit ready event */
+    mutex_t in_lock;                /**< mutex used for locking hid send */
 };
 
 /**
@@ -85,10 +86,9 @@ struct usbus_hid_device {
  * @param[in]   report_desc         USB_HID report descriptor
  * @param[in]   report_desc_size    Size of USB_HID report descriptor
  */
-void usbus_hid_device_init(usbus_t *usbus, usbus_hid_device_t *hid,
-                           usbus_hid_cb_t cb,
-                           uint8_t *buf, size_t len, uint8_t *report_desc,
-                           size_t report_desc_size);
+void usbus_hid_init(usbus_t *usbus, usbus_hid_device_t *hid,
+                    usbus_hid_cb_t cb, uint8_t *report_desc,
+                    size_t report_desc_size);
 
 /**
  * @brief Submit bytes to the HID handler
