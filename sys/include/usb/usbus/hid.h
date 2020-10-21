@@ -66,7 +66,7 @@ struct usbus_hid_device {
     usbus_handler_t handler_ctrl;   /**< control handler */
     usbus_interface_t iface;        /**< HID interface */
     usbus_descr_gen_t hid_descr;    /**< HID descriptor generator */
-    uint8_t *report_desc;           /**< report descriptor reference */
+    const uint8_t *report_desc;     /**< report descriptor reference */
     size_t report_desc_size;        /**< report descriptor size */
     usbus_t *usbus;                 /**< USBUS reference */
     size_t occupied;                /**< Number of bytes for the host */
@@ -87,7 +87,7 @@ struct usbus_hid_device {
  * @param[in]   report_desc_size    Size of USB_HID report descriptor
  */
 void usbus_hid_init(usbus_t *usbus, usbus_hid_device_t *hid,
-                    usbus_hid_cb_t cb, uint8_t *report_desc,
+                    usbus_hid_cb_t cb, const uint8_t *report_desc,
                     size_t report_desc_size);
 
 /**
