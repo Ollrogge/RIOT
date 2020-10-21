@@ -77,14 +77,12 @@ static void _handle_tx_ready(event_t *ev)
 {
     usbus_hid_device_t *hid = container_of(ev, usbus_hid_device_t, tx_ready);
 
-    /* todo: use mutex to lock hid tx ? */
-
     /* linked list ep at index 1 is IN */
     usbdev_ep_ready(hid->iface.ep->next->ep, hid->occupied);
 }
 
 void usbus_hid_init(usbus_t *usbus, usbus_hid_device_t *hid, usbus_hid_cb_t cb,
-                    uint8_t *report_desc, size_t report_desc_size)
+                    const uint8_t *report_desc, size_t report_desc_size)
 {
     memset(hid, 0, sizeof(usbus_hid_device_t));
     hid->usbus = usbus;
@@ -172,7 +170,7 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
                 usbus_control_slicer_put_bytes(usbus, hid->report_desc,
                                                hid->report_desc_size);
             }
-            else if (setup->value >> 8 == USB_HID_DESCR_HID) {
+            else if (desc_type == USB_HID_DESCR_HID) {
                 _gen_hid_descriptor(usbus, NULL);
             }
             break;
