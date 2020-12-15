@@ -117,30 +117,28 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     hid->iface.handler = handler;
 
     /* IN endpoint to send data to host */
-    usbus_endpoint_t *ep = usbus_add_endpoint(usbus, &hid->iface,
+    hid->ep_in = usbus_add_endpoint(usbus, &hid->iface,
                                               USB_EP_TYPE_INTERRUPT,
                                               USB_EP_DIR_IN,
                                             CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
 
     /* interrupt endpoint polling rate in ms */
-    ep->interval = 0x05;
-    hid->ep_in = ep;
+    hid->ep_in->interval = 0x05;
 
-    usbus_enable_endpoint(ep);
+    usbus_enable_endpoint(hid->ep_in);
 
     /* OUT endpoint to receive data from host */
-    ep = usbus_add_endpoint(usbus, &hid->iface,
+    hid->ep_out = usbus_add_endpoint(usbus, &hid->iface,
                             USB_EP_TYPE_INTERRUPT, USB_EP_DIR_OUT,
                             CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
 
     /* interrupt endpoint polling rate in ms */
-    ep->interval = 0x05;
-    hid->ep_out = ep;
+    hid->ep_out->interval = 0x05;
 
-    usbus_enable_endpoint(ep);
+    usbus_enable_endpoint(hid->ep_out);
 
     /* signal that INTERRUPT OUT is ready to receive data */
-    usbdev_ep_ready(ep->ep, 0);
+    usbdev_ep_ready(hid->ep_out->ep, 0);
 
     usbus_add_interface(usbus, &hid->iface);
 }
