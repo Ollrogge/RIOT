@@ -305,7 +305,7 @@ netopt_state_t _get_state(at86rf2xx_t *dev)
 
 static int _get(netdev_t *netdev, netopt_t opt, void *val, size_t max_len)
 {
-    at86rf2xx_t *dev = (at86rf2xx_t *) netdev;
+    at86rf2xx_t *dev = (at86rf2xx_t *)netdev;
 
     if (netdev == NULL) {
         return -ENODEV;
@@ -483,13 +483,12 @@ static int _get(netdev_t *netdev, netopt_t opt, void *val, size_t max_len)
 
 static int _set(netdev_t *netdev, netopt_t opt, const void *val, size_t len)
 {
-    at86rf2xx_t *dev = (at86rf2xx_t *) netdev;
-    uint8_t old_state = at86rf2xx_get_status(dev);
-    int res = -ENOTSUP;
-
+    at86rf2xx_t *dev = (at86rf2xx_t *)netdev;
     if (dev == NULL) {
         return -ENODEV;
     }
+    uint8_t old_state = at86rf2xx_get_status(dev);
+    int res = -ENOTSUP;
 
     /* temporarily wake up if sleeping and opt != NETOPT_STATE.
      * opt != NETOPT_STATE check prevents redundant wake-up.
@@ -870,7 +869,7 @@ ISR(TRX24_TX_START_vect){
  */
 ISR(TRX24_RX_END_vect, ISR_BLOCK)
 {
-    atmega_enter_isr();
+    avr8_enter_isr();
 
     uint8_t status = *AT86RF2XX_REG__TRX_STATE & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
     DEBUG("TRX24_RX_END 0x%x\n", status);
@@ -879,7 +878,7 @@ ISR(TRX24_RX_END_vect, ISR_BLOCK)
     /* Call upper layer to process received data */
     netdev_trigger_event_isr(at86rfmega_dev);
 
-    atmega_exit_isr();
+    avr8_exit_isr();
 }
 
 /**
@@ -892,12 +891,12 @@ ISR(TRX24_RX_END_vect, ISR_BLOCK)
  */
 ISR(TRX24_XAH_AMI_vect, ISR_BLOCK)
 {
-    atmega_enter_isr();
+    avr8_enter_isr();
 
     DEBUG("TRX24_XAH_AMI\n");
     ((at86rf2xx_t *)at86rfmega_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__AMI;
 
-    atmega_exit_isr();
+    avr8_exit_isr();
 }
 
 /**
@@ -909,7 +908,7 @@ ISR(TRX24_XAH_AMI_vect, ISR_BLOCK)
  */
 ISR(TRX24_TX_END_vect, ISR_BLOCK)
 {
-    atmega_enter_isr();
+    avr8_enter_isr();
 
     at86rf2xx_t *dev = (at86rf2xx_t *) at86rfmega_dev;
     uint8_t status = *AT86RF2XX_REG__TRX_STATE & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
@@ -924,7 +923,7 @@ ISR(TRX24_TX_END_vect, ISR_BLOCK)
         netdev_trigger_event_isr(at86rfmega_dev);
     }
 
-    atmega_exit_isr();
+    avr8_exit_isr();
 }
 
 #endif /* MODULE_AT86RFA1 || MODULE_AT86RFR2 */

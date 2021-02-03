@@ -73,9 +73,9 @@
  *
  */
 char *thread_stack_init(thread_task_func_t task_func,
-                             void *arg,
-                             void *stack_start,
-                             int stack_size)
+                        void *arg,
+                        void *stack_start,
+                        int stack_size)
 {
     struct context_switch_frame *sf;
     uint32_t *stk_top;
@@ -97,25 +97,26 @@ char *thread_stack_init(thread_task_func_t task_func,
     stk_top = (uint32_t *)((uintptr_t)stk_top - sizeof(*sf));
 
     /* populate the stack frame with default values for starting the thread. */
-    sf = (struct context_switch_frame *) stk_top;
+    sf = (struct context_switch_frame *)stk_top;
 
     /* Clear stack frame */
     memset(sf, 0, sizeof(*sf));
 
     /* set initial reg values */
-    sf->pc = (uint32_t) task_func;
-    sf->a0 = (uint32_t) arg;
+    sf->pc = (uint32_t)task_func;
+    sf->a0 = (uint32_t)arg;
 
     /* if the thread exits go to sched_task_exit() */
-    sf->ra = (uint32_t) sched_task_exit;
+    sf->ra = (uint32_t)sched_task_exit;
 
-    return (char *) stk_top;
+    return (char *)stk_top;
 }
 
 void thread_print_stack(void)
 {
     int count = 0;
     thread_t *active_thread = thread_get_active();
+
     if (!active_thread) {
         return;
     }
@@ -178,15 +179,6 @@ void cpu_switch_context_exit(void)
     UNREACHABLE();
 }
 
-void thread_yield_higher(void)
-{
-    /* Use SW intr to schedule context switch */
-    CLINT_REG(CLINT_MSIP) = 1;
-
-    /* Latency of SW intr can be 4-7 cycles; wait for the SW intr */
-    __asm__ volatile ("wfi");
-}
-
 /**
  * @brief Print heap statistics
  */
@@ -197,6 +189,7 @@ void heap_stats(void)
 
     long int heap_size = &_eheap - &_sheap;
     struct mallinfo minfo = mallinfo();
+
     printf("heap: %ld (used %u, free %ld) [bytes]\n",
            heap_size, minfo.uordblks, heap_size - minfo.uordblks);
 }

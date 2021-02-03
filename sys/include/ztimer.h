@@ -237,6 +237,7 @@
 #include "sched.h"
 #include "msg.h"
 #include "mutex.h"
+#include "rmutex.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -350,6 +351,17 @@ void ztimer_handler(ztimer_clock_t *clock);
 void ztimer_set(ztimer_clock_t *clock, ztimer_t *timer, uint32_t val);
 
 /**
+ * @brief   Check if a timer is currently active
+ *
+ * @param[in]   clock       ztimer clock to operate on
+ * @param[in]   timer       timer to check
+ *
+ * @return  > 0 if timer is active
+ * @return 0 if timer is not active
+ */
+unsigned ztimer_is_set(const ztimer_clock_t *clock, const ztimer_t *timer);
+
+/**
  * @brief   Remove a timer from a clock
  *
  * This will place @p timer in the timer targets queue for @p clock.
@@ -400,7 +412,7 @@ void ztimer_set_msg(ztimer_clock_t *clock, ztimer_t *timer, uint32_t offset,
 int ztimer_msg_receive_timeout(ztimer_clock_t *clock, msg_t *msg,
                                uint32_t timeout);
 
- /* created with dist/tools/define2u16.py */
+/* created with dist/tools/define2u16.py */
 #define MSG_ZTIMER 0xc83e   /**< msg type used by ztimer_msg_receive_timeout */
 
 /**
@@ -473,7 +485,8 @@ void ztimer_sleep(ztimer_clock_t *clock, uint32_t duration);
  * @param[in]   clock           ztimer clock to use
  * @param[in]   duration        duration to spin, in @p clock time units
  */
-static inline void ztimer_spin(ztimer_clock_t *clock, uint32_t duration) {
+static inline void ztimer_spin(ztimer_clock_t *clock, uint32_t duration)
+{
     uint32_t end = ztimer_now(clock) + duration;
 
     /* Rely on integer overflow. `end - now` will be smaller than `duration`,
@@ -520,6 +533,19 @@ void ztimer_set_timeout_flag(ztimer_clock_t *clock, ztimer_t *timer,
  */
 int ztimer_mutex_lock_timeout(ztimer_clock_t *clock, mutex_t *mutex,
                               uint32_t timeout);
+
+/**
+ * @brief   Try to lock the given rmutex, but give up after @p timeout
+ *
+ * @param[in]       clock       ztimer clock to operate on
+ * @param[in,out]   rmutex      rmutex object to lock
+ * @param[in]       timeout     timeout after which to give up
+ *
+ * @retval  0               Success, caller has the rmutex
+ * @retval  -ECANCELED      Failed to obtain rmutex within @p timeout
+ */
+int ztimer_rmutex_lock_timeout(ztimer_clock_t *clock, rmutex_t *rmutex,
+                               uint32_t timeout);
 
 /**
  * @brief   Update ztimer clock head list offset

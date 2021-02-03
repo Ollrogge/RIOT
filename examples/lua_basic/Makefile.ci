@@ -3,6 +3,7 @@ BOARD_INSUFFICIENT_MEMORY := \
     blackpill-128kib \
     bluepill \
     bluepill-128kib \
+    bluepill-stm32f030c8 \
     calliope-mini \
     cc2650-launchpad \
     cc2650stk \
@@ -33,6 +34,7 @@ BOARD_INSUFFICIENT_MEMORY := \
     opencm904 \
     saml10-xpro \
     saml11-xpro \
+    slstk3400a \
     spark-core \
     stk3200 \
     stm32f030f4-demo \

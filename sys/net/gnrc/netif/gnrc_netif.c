@@ -32,6 +32,9 @@
 #if IS_USED(MODULE_GNRC_NETIF_PKTQ)
 #include "net/gnrc/netif/pktq.h"
 #endif /* IS_USED(MODULE_GNRC_NETIF_PKTQ) */
+#if IS_USED(MODULE_GNRC_SIXLOWPAN_FRAG_SFR)
+#include "net/gnrc/sixlowpan/frag/sfr.h"
+#endif /* IS_USED(MODULE_GNRC_SIXLOWPAN_FRAG_SFR) */
 #if IS_USED(MODULE_NETSTATS)
 #include "net/netstats.h"
 #endif /* IS_USED(MODULE_NETSTATS) */
@@ -92,6 +95,7 @@ bool gnrc_netif_dev_is_6lo(const gnrc_netif_t *netif)
         case NETDEV_TYPE_CC110X:
         case NETDEV_TYPE_BLE:
         case NETDEV_TYPE_NRFMIN:
+        case NETDEV_TYPE_NRF24L01P_NG:
         case NETDEV_TYPE_ESP_NOW:
             return true;
         default:
@@ -1355,6 +1359,10 @@ static void _test_options(gnrc_netif_t *netif)
             assert(netif->ipv6.mtu < UINT16_MAX);
 #endif  /* IS_USED(MODULE_GNRC_NETIF_IPV6) */
             break;
+        case NETDEV_TYPE_NRF24L01P_NG:
+            assert(netif->flags & GNRC_NETIF_FLAGS_HAS_L2ADDR);
+            assert(netif->l2addr_len >= 3U && netif->l2addr_len <= 5U);
+            break;
         case NETDEV_TYPE_LORA: /* LoRa doesn't provide L2 ADDR */
         case NETDEV_TYPE_SLIP:
             assert(!(netif->flags & GNRC_NETIF_FLAGS_HAS_L2ADDR));
@@ -1389,6 +1397,9 @@ void gnrc_netif_default_init(gnrc_netif_t *netif)
     _init_from_device(netif);
 #ifdef DEVELHELP
     _test_options(netif);
+#endif
+#if IS_USED(MODULE_GNRC_SIXLOWPAN_FRAG_SFR)
+    gnrc_sixlowpan_frag_sfr_init_iface(netif);
 #endif
     netif->cur_hl = CONFIG_GNRC_NETIF_DEFAULT_HL;
 #ifdef MODULE_GNRC_IPV6_NIB

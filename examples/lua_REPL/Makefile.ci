@@ -11,6 +11,7 @@ BOARD_INSUFFICIENT_MEMORY := \
     blackpill-128kib \
     bluepill \
     bluepill-128kib \
+    bluepill-stm32f030c8 \
     calliope-mini \
     cc2538dk \
     cc2650-launchpad \
@@ -68,6 +69,7 @@ BOARD_INSUFFICIENT_MEMORY := \
     remote-pa \
     remote-reva \
     remote-revb \
+    samd20-xpro \
     samd21-xpro \
     saml10-xpro \
     saml11-xpro \
@@ -78,6 +80,7 @@ BOARD_INSUFFICIENT_MEMORY := \
     seeeduino_arch-pro \
     sensebox_samd21 \
     serpente \
+    slstk3400a \
     slstk3401a \
     sltb001a \
     slwstk6000b-slwrb4150a \

@@ -24,10 +24,16 @@
 #include <string.h>
 
 #include "riotboot/flashwrite.h"
+#include "riotboot/slot.h"
 #include "od.h"
 
 #define LOG_PREFIX "riotboot_flashwrite: "
 #include "log.h"
+
+/**
+ * @brief Magic number used to invalidate a slot
+ */
+#define INVALIDATE_HDR                  0xAA
 
 static inline size_t min(size_t a, size_t b)
 {
@@ -43,9 +49,15 @@ size_t riotboot_flashwrite_slotsize(
 int riotboot_flashwrite_init_raw(riotboot_flashwrite_t *state, int target_slot,
                              size_t offset)
 {
+#ifdef FLASHPAGE_SIZE
     assert(offset <= FLASHPAGE_SIZE);
     /* the flashpage size must be a multiple of the riotboot flashpage buffer */
     static_assert(!(FLASHPAGE_SIZE % RIOTBOOT_FLASHPAGE_BUFFER_SIZE));
+#else
+    /* The flashpage buffer must be a multiple of the write block size */
+    static_assert(!(RIOTBOOT_FLASHPAGE_BUFFER_SIZE % FLASHPAGE_WRITE_BLOCK_SIZE));
+#endif
+
 
     LOG_INFO(LOG_PREFIX "initializing update to target slot %i\n",
              target_slot);
@@ -97,15 +109,20 @@ int riotboot_flashwrite_putbytes(riotboot_flashwrite_t *state,
     LOG_DEBUG(LOG_PREFIX "processing bytes %u-%u\n", state->offset, state->offset + len - 1);
 
     while (len) {
-        size_t flashpage_pos = state->offset % FLASHPAGE_SIZE;
+        /* Position within the page, calculated from state->offset by
+         * subtracting the start offset of the current page */
+        size_t flashpage_pos = state->offset -
+            (flashpage_addr(state->flashpage) - (void*)riotboot_slot_get_hdr(state->target_slot));
         size_t flashwrite_buffer_pos = state->offset % RIOTBOOT_FLASHPAGE_BUFFER_SIZE;
         size_t flashpage_avail = RIOTBOOT_FLASHPAGE_BUFFER_SIZE - flashwrite_buffer_pos;
 
         size_t to_copy = min(flashpage_avail, len);
 
-        if (CONFIG_RIOTBOOT_FLASHWRITE_RAW && flashpage_pos == 0) {
+        if (CONFIG_RIOTBOOT_FLASHWRITE_RAW &&
+                flashpage_pos == flashpage_size(state->flashpage)) {
             /* Erase the next page */
             state->flashpage++;
+            flashpage_pos = 0;
             flashpage_erase(state->flashpage);
         }
         if (CONFIG_RIOTBOOT_FLASHWRITE_RAW &&
@@ -148,6 +165,34 @@ int riotboot_flashwrite_putbytes(riotboot_flashwrite_t *state,
     }
 
     return 0;
+}
+
+int riotboot_flashwrite_invalidate(int slot)
+{
+    if (riotboot_slot_numof == 1) {
+        LOG_WARNING(LOG_PREFIX "abort, only one slot configured\n");
+        return -1;
+    }
+    if (riotboot_slot_validate(1 - slot) != 0) {
+        LOG_WARNING(LOG_PREFIX "abort, can not erase slot[%d], other slot[%d] is invalid\n",slot, 1 - slot);
+        return -2;
+    }
+
+    uint8_t data_flash[4];
+    memset(data_flash, INVALIDATE_HDR, sizeof(data_flash));
+
+    flashpage_write((void *)riotboot_slot_get_hdr(slot), data_flash, sizeof(data_flash));
+
+    return 0;
+}
+
+int riotboot_flashwrite_invalidate_latest(void)
+{
+    int _slot_to_revert;
+    _slot_to_revert = (riotboot_slot_get_hdr(riotboot_slot_other())->version
+                        > riotboot_slot_get_hdr(riotboot_slot_current())->version)
+                        ? riotboot_slot_other() : riotboot_slot_current();
+    return riotboot_flashwrite_invalidate(_slot_to_revert);
 }
 
 int riotboot_flashwrite_finish_raw(riotboot_flashwrite_t *state,
