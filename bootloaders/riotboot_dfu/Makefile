@@ -19,12 +19,8 @@ DISABLE_MODULE += auto_init auto_init_%
 
 # avoid using stdio
 USEMODULE += stdio_null
-
-# Include riotboot flash partition functionality
-USEMODULE += riotboot_slot
-
 # Add RIOTBOOT USB DFU integration
-USEMODULE=riotboot_usb_dfu
+USEMODULE += riotboot_usb_dfu
 
 # Use xtimer for scheduled reboot
 USEMODULE += xtimer
@@ -35,8 +31,10 @@ RIOTBASE ?= $(CURDIR)/../../
 # USB device vendor and product ID
 # pid.codes test VID/PID, not globally unique
 
-USB_VID ?= ${USB_VID_TESTING}
-USB_PID ?= ${USB_PID_TESTING}
+# The VID/PID pair allocated for the RIOT bootloader
+# as allocated on https://pid.codes/1209/7D02/
+USB_VID ?= 1209
+USB_PID ?= 7D02
 
 include $(RIOTBASE)/Makefile.include
 

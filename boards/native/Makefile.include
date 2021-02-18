@@ -23,7 +23,7 @@ export GPROF ?= gprof
 CFLAGS += -Wall -Wextra -pedantic $(CFLAGS_DBG)
 CFLAGS_DBG ?= -g3
 
-# default std set to gnu99 of not overwritten by user
+# default std set to gnu11 if not overwritten by user
 ifeq (,$(filter -std=%, $(CFLAGS)))
   CFLAGS += -std=gnu11
 endif
@@ -58,6 +58,9 @@ ifeq ($(OS),FreeBSD)
 else
   LINKFLAGS += -ldl
 endif
+
+# XFA (cross file array) support
+LINKFLAGS += -T$(RIOTBASE)/cpu/native/ldscripts/xfa.ld
 
 # clean up unused functions
 CFLAGS += -ffunction-sections -fdata-sections

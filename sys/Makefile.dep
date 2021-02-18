@@ -331,6 +331,10 @@ ifneq (,$(filter gnrc_sixlowpan_frag_sfr,$(USEMODULE)))
   USEMODULE += gnrc_sixlowpan_frag_rb
   USEMODULE += evtimer
   USEMODULE += xtimer
+  ifneq (,$(filter gnrc_tx_sync,$(USEMODULE)))
+    # TODO: Implement gnrc_tx_sync for gnrc_sixlowpand_frag_sfr
+    $(error module gnrc_tx_sync conflicts with gnrc_sixlowpand_frag_sfr)
+  endif
 endif
 
 ifneq (,$(filter gnrc_sixlowpan_frag_sfr_stats,$(USEMODULE)))
@@ -698,6 +702,11 @@ endif
 
 ifneq (,$(filter netstats_%, $(USEMODULE)))
   USEMODULE += netstats
+endif
+
+ifneq (,$(filter netstats_neighbor_%, $(USEMODULE)))
+  USEMODULE += netstats_neighbor
+  USEMODULE += xtimer
 endif
 
 ifneq (,$(filter gnrc_lwmac,$(USEMODULE)))
