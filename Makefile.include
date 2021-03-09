@@ -410,6 +410,17 @@ endif
 # Include common programmer logic if available
 -include $(RIOTMAKE)/tools/$(PROGRAMMER).inc.mk
 
+# Check if programmer is supported by the board, only if PROGRAMMERS_SUPPORTED
+# is set and if programmer is not iotlab
+ifneq (iotlab,$(PROGRAMMER))
+  ifneq (,$(PROGRAMMERS_SUPPORTED))
+    ifeq (,$(filter $(PROGRAMMER),$(PROGRAMMERS_SUPPORTED)))
+      $(info '$(PROGRAMMER)' programmer is not supported by this board. \
+              Supported programmers: '$(PROGRAMMERS_SUPPORTED)')
+    endif
+  endif
+endif
+
 # Assume GCC/GNU as supported toolchain if CPU's Makefile.include doesn't
 # provide this macro
 TOOLCHAINS_SUPPORTED ?= gnu
@@ -513,7 +524,7 @@ include $(RIOTMAKE)/modules.inc.mk
 
 
 .PHONY: all link clean flash flash-only termdeps term doc debug debug-server reset objdump help info-modules
-.PHONY: print-size elffile binfile hexfile flashfile
+.PHONY: print-size elffile binfile hexfile flashfile cosy
 .PHONY: ..in-docker-container
 
 # Targets that depend on FORCE will always be rebuilt. Contrary to a .PHONY
@@ -539,6 +550,7 @@ endif
 ELFFILE ?= $(BINDIR)/$(APPLICATION).elf
 HEXFILE ?= $(ELFFILE:.elf=.hex)
 BINFILE ?= $(ELFFILE:.elf=.bin)
+MAPFILE ?= $(ELFFILE:.elf=.map)
 
 ifneq (,$(filter suit, $(USEMODULE)))
   include $(RIOTMAKE)/suit.base.inc.mk
@@ -697,10 +709,13 @@ distclean:
 	-@for i in $(USEPKG) ; do "$(MAKE)" -C $(RIOTPKG)/$$i distclean ; done
 	-@rm -rf $(BINDIRBASE)
 
+# Include PROGRAMMER_FLASH/PROGRAMMER_RESET variables
+include $(RIOTMAKE)/tools/programmer.inc.mk
+
 # Define flash-recipe with a default value
 define default-flash-recipe
   $(call check_cmd,$(FLASHER),Flash program)
-  $(FLASHER) $(FFLAGS)
+  $(PROGRAMMER_FLASH)
 endef
 flash-recipe ?= $(default-flash-recipe)
 
@@ -715,6 +730,11 @@ flash-only: $(FLASHDEPS)
 
 preflash: $(BUILD_BEFORE_FLASH)
 	$(PREFLASHER_PREFIX)$(PREFLASHER) $(PREFFLAGS)
+
+# graphical memory usage analyzer
+COSY_TOOL ?= $(PKGDIRBASE)/cosy/cosy.py
+cosy: $(ELFFILE) $(COSY_TOOL)
+	$(COSY_TOOL) --riot-base $(RIOTBASE) $(APPDIR) $(BOARD) $(ELFFILE) $(MAPFILE)
 
 ifneq (,$(TERMLOG)$(TERMTEE))
   TERMTEE ?= | tee -a $(TERMLOG)
@@ -757,7 +777,7 @@ endif
 
 reset:
 	$(call check_cmd,$(RESET),Reset program)
-	$(RESET) $(RESET_FLAGS)
+	$(PROGRAMMER_RESET)
 
 # tests related targets and variables
 include $(RIOTMAKE)/tests/tests.inc.mk

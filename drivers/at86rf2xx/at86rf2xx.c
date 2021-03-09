@@ -24,8 +24,7 @@
  * @}
  */
 
-
-#include "luid.h"
+#include "kernel_defines.h"
 #include "byteorder.h"
 #include "net/ieee802154.h"
 #if IS_USED(IEEE802154_SECURITY)
@@ -111,7 +110,7 @@ static const ieee802154_radio_cipher_ops_t _at86rf2xx_cipher_ops = {
     .ecb = _at86rf2xx_ecb,
     .cbc = _at86rf2xx_cbc
 };
-#endif /* IS_USED(MODULE_AT86RF2XX_COMMON_AES_SPI) && \
+#endif /* IS_USED(MODULE_AT86RF2XX_AES_SPI) && \
           IS_USED(MODULE_IEEE802154_SECURITY) */
 
 void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params, uint8_t index)

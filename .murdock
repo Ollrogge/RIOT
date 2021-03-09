@@ -8,7 +8,7 @@
 : ${TEST_BOARDS_LLVM_COMPILE:=""}
 
 : ${TEST_KCONFIG_samr21_xpro:="examples/hello-world tests/periph_*
-tests/xtimer_* tests/ztimer_*
+tests/test_tools tests/congure_* tests/xtimer_* tests/ztimer_*
 tests/driver_ad7746 tests/driver_adcxx1c tests/driver_ads101x tests/driver_adt101x
 tests/driver_adt7310 tests/driver_adxl345 tests/driver_aip31068 tests/driver_apa102
 tests/driver_apds99xx tests/driver_apds99xx_full tests/driver_at tests/driver_at24cxxx
@@ -25,8 +25,9 @@ tests/mtd_mapper tests/driver_o* tests/driver_p* tests/driver_q*
 tests/driver_r* tests/driver_s* tests/driver_t* tests/driver_u*
 tests/driver_v*"}
 : ${TEST_KCONFIG_native:="examples/hello-world tests/periph_* tests/sys_crypto
-tests/prng_* tests/xtimer_* tests/ztimer_* tests/driver_ws281x
-tests/posix_sleep"}
+tests/test_tools tests/congure_* tests/prng_* tests/xtimer_* tests/ztimer_*
+tests/driver_ws281x tests/posix_sleep tests/pkg_umorse tests/cb_mux* tests/eepreg
+tests/shell tests/struct_tm_utility"}
 
 : ${TEST_WITH_CONFIG_SUPPORTED:="examples/suit_update tests/driver_at86rf2xx_aes"}
 
@@ -289,6 +290,7 @@ compile() {
                 kconfig_test_hash=0
                 echo "An error occurred while compiling using Kconfig";
             fi
+            break
         fi
     done
 
@@ -301,7 +303,7 @@ compile() {
 
     if [ ${should_check_kconfig_hash} != 0 ]; then
         if [ ${kconfig_test_hash} != ${test_hash} ]; then
-            echo "Hashes of binaries with and without Kconfig mismatch for ${app}";
+            echo "Hashes of binaries with and without Kconfig mismatch for ${appdir}";
             echo "Please check that all used modules are modelled in Kconfig and enabled";
             RES=1
         fi

@@ -47,11 +47,13 @@ int riotboot_flashwrite_init_raw(riotboot_flashwrite_t *state, int target_slot,
 #ifdef FLASHPAGE_SIZE
     assert(offset <= FLASHPAGE_SIZE);
     /* the flashpage size must be a multiple of the riotboot flashpage buffer */
-    static_assert(!(FLASHPAGE_SIZE % RIOTBOOT_FLASHPAGE_BUFFER_SIZE));
+    static_assert(!(FLASHPAGE_SIZE % RIOTBOOT_FLASHPAGE_BUFFER_SIZE),
+                  "Flashpage size must be a multiple of riotboot flashpage buffer.");
 #else
     /* The flashpage buffer must be a multiple of the write block size */
     static_assert(!(RIOTBOOT_FLASHPAGE_BUFFER_SIZE %
-                    FLASHPAGE_WRITE_BLOCK_SIZE));
+                    FLASHPAGE_WRITE_BLOCK_SIZE),
+                  "Flashpage buffer must be a multiple of write block size.");
 #endif
 
 
@@ -211,11 +213,13 @@ int riotboot_flashwrite_invalidate_latest(void)
 int riotboot_flashwrite_finish_raw(riotboot_flashwrite_t *state,
                                    const uint8_t *bytes, size_t len)
 {
+#ifndef PERIPH_FLASHPAGE_CUSTOM_PAGESIZES
     assert(len <= FLASHPAGE_SIZE);
+#endif
 
     uint8_t *slot_start = (uint8_t *)riotboot_slot_get_hdr(state->target_slot);
 
-#if CONFIG_RIOTBOOT_FLASHWRITE_RAW
+#if IS_ACTIVE(CONFIG_RIOTBOOT_FLASHWRITE_RAW)
     memcpy(state->firstblock_buf, bytes, len);
     flashpage_write(slot_start, state->firstblock_buf,
                     RIOTBOOT_FLASHPAGE_BUFFER_SIZE);

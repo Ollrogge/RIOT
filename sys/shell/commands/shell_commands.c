@@ -22,6 +22,9 @@
 
 #include <stdlib.h>
 #include "shell_commands.h"
+#ifdef MODULE_CONGURE_TEST
+#include "congure/test.h"
+#endif
 
 extern int _reboot_handler(int argc, char **argv);
 extern int _version_handler(int argc, char **argv);
@@ -106,6 +109,10 @@ extern int _gnrc_netif_send(int argc, char **argv);
 #ifdef MODULE_OPENWSN
 extern int _openwsn_ifconfig(int argc, char **argv);
 extern int _openwsn_handler(int argc, char **argv);
+#endif
+
+#ifdef MODULE_LWIP_NETIF
+extern int _lwip_netif_config(int argc, char **argv);
 #endif
 
 #ifdef MODULE_FIB
@@ -262,6 +269,9 @@ const shell_command_t _shell_command_list[] = {
     {"ifconfig", "Shows assigned IPv6 addresses", _openwsn_ifconfig},
     {"openwsn", "OpenWSN commands", _openwsn_handler},
 #endif
+#ifdef MODULE_LWIP_NETIF
+    {"ifconfig", "List network interfaces", _lwip_netif_config},
+#endif
 #ifdef MODULE_FIB
     {"fibroute", "Manipulate the FIB (info: 'fibroute [add|del]')", _fib_route_handler},
 #endif
@@ -331,6 +341,25 @@ const shell_command_t _shell_command_list[] = {
 #endif
 #ifdef MODULE_DFPLAYER
     {"dfplayer", "Control a DFPlayer Mini MP3 player", _sc_dfplayer},
+#endif
+#ifdef MODULE_CONGURE_TEST
+    { "cong_clear", "Clears CongURE state object", congure_test_clear_state },
+    { "cong_setup", "Calls the setup function for the CongURE state object",
+      congure_test_call_setup },
+    { "cong_init", "Calls init method of the CongURE state object",
+      congure_test_call_init },
+    { "cong_imi", "Calls inter_message_interval method of the CongURE state object",
+      congure_test_call_inter_msg_interval },
+    { "cong_add_msg",
+      "Adds a message to the list of messages to be reported with "
+      "report_msgs_lost or report_msgs_timeout",
+      congure_test_add_msg },
+    { "cong_msgs_reset",
+      "Resets the list of messages to be reported with report_msgs_lost or "
+      "report_msgs_timeout",
+      congure_test_msgs_reset },
+    { "cong_report", "Calls a report_* method of the CongURE state object",
+      congure_test_call_report },
 #endif
     {NULL, NULL, NULL}
 };

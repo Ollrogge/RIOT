@@ -20,6 +20,7 @@ PSEUDOMODULES += cortexm_fpu
 PSEUDOMODULES += cortexm_svc
 PSEUDOMODULES += cpu_check_address
 PSEUDOMODULES += crypto_%	# crypto_aes or crypto_3des
+PSEUDOMODULES += dbgpin
 PSEUDOMODULES += devfs_%
 PSEUDOMODULES += dhcpv6_%
 PSEUDOMODULES += ecc_%
@@ -147,6 +148,7 @@ PSEUDOMODULES += stm32mp1_eng_mode
 PSEUDOMODULES += suit_transport_%
 PSEUDOMODULES += suit_storage_%
 PSEUDOMODULES += sys_bus_%
+PSEUDOMODULES += vdd_lc_filter_%
 PSEUDOMODULES += wakaama_objects_%
 PSEUDOMODULES += wifi_enterprise
 PSEUDOMODULES += xtimer_on_ztimer
@@ -304,5 +306,6 @@ NO_PSEUDOMODULES += auto_init_loramac
 NO_PSEUDOMODULES += auto_init_multimedia
 NO_PSEUDOMODULES += auto_init_security
 NO_PSEUDOMODULES += auto_init_usbus
+NO_PSEUDOMODULES += auto_init_screen
 
 # Packages may also add modules to PSEUDOMODULES in their `Makefile.include`.

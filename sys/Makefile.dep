@@ -21,6 +21,14 @@ ifneq (,$(filter arduino_pwm,$(FEATURES_USED)))
   FEATURES_REQUIRED += periph_pwm
 endif
 
+ifneq (,$(filter congure_%,$(USEMODULE)))
+  USEMODULE += congure
+endif
+
+ifneq (,$(filter congure_test,$(USEMODULE)))
+  USEMODULE += fmt
+endif
+
 ifneq (,$(filter eepreg,$(USEMODULE)))
   FEATURES_REQUIRED += periph_eeprom
 endif
@@ -1116,6 +1124,11 @@ endif
 
 ifneq (,$(filter ecc_%,$(USEMODULE)))
   USEMODULE += ecc
+endif
+
+ifneq (,$(filter dbgpin,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_gpio
+  FEATURES_REQUIRED += dbgpin
 endif
 
 include $(RIOTBASE)/sys/test_utils/Makefile.dep
