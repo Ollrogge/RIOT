@@ -76,9 +76,6 @@ typedef struct cipher_interface_st {
     /** Blocksize of this cipher */
     uint8_t block_size;
 
-    /** Maximum key size for this cipher */
-    uint8_t max_key_size;
-
     /** the init function */
     int (*init)(cipher_context_t *ctx, const uint8_t *key, uint8_t key_size);
 
