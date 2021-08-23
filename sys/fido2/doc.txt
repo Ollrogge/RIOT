@@ -10,8 +10,10 @@
  * @defgroup    fido2 FIDO2 - Fast Identity Online 2
  * @ingroup     sys
  *
- * @note This is an experimental implementation not yet supporting all features
- * of FIDO2 CTAP.
+ * @warning This feature is experimental!
+ *          This API is experimental and in an early state - expect changes.
+ *
+ * @warning The FIDO2 implementation currently stores private keys in plain text inside flash memory.
  *
  * FIDO2 is an authentication standard that seeks to solve the password problem
  * by enabling passwordless authentication. Instead of using passwords to
@@ -86,9 +88,9 @@
  *
  * Helper containing functionality for cryptographic operations.
  *
- * Abstraction for native cryptographic operations (SHA256, HMAC-SHA-256, AES CCM).
+ * Abstraction for cryptographic operations (SHA256, HMAC-SHA-256, AES CCM).
  *
- * @warning This abstraction ignores the pointer to a static buffer returned by some functions (e.g. @ref sha256). Therefore a valid pointer to a buffer for the digest always needs to be provided when necessary.
+ * @note This abstraction exposes error return values which are currently not implemented in all cases by the RIOT crypto API.
  *
  * Abstraction for Elliptic curve cryptography (ECC) operations. Uses the [micro-ecc](https://api.riot-os.org/group__pkg__micro__ecc.html) pkg.
  *
@@ -96,9 +98,9 @@
  *
  * **ctap_mem**
  *
- * Abstraction for native flash operations based on [Flash page driver](https://doc.riot-os.org/group__drivers__periph__flashpage.html).
+ * Abstraction for flash operations. Uses the RIOT [Flash page driver](https://doc.riot-os.org/group__drivers__periph__flashpage.html).
  *
- * Adds additional functionality to speedup flash accesses.
+ * Adds additional functionality to speedup flash accesses (e.g. by checking if a flash page is erased to avoid unnecessary erasures of flash pages).
  *
  * **ctap_utils**
  *
@@ -132,13 +134,15 @@
  *      * Resident credentials are credentials stored on the authenticator.
  *      * This implementation stores resident keys in flash memory.
  *      @warning As of now the credentials (containing a private key) are stored
- *      unencrypted in flash memory.
+ *       in plain text inside flash memory
  *
  *  * Non-resident credentials
  *      * Non-resident credentials are credentials that are stored by the relying
  *        party in encrypted form.
- *      * To encrypt the credentials, this implementation uses the native [AES-CCM 128
+ *      * To encrypt the credentials, this implementation uses the RIOT [AES-CCM 128
  *        CCM implementation](https://api.riot-os.org/ccm_8h.html).
+ *
+ * For more information about the two types of credential refer to the [WebAuthn specification](https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-credential-storage-modality)
  *
  * **Attestation types**
  *
@@ -146,15 +150,12 @@
  *
  * For more information about available attestation types refer to the [WebAuthn specification](https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-attestation-types).
  *
- * For more information about the two types of credential refer to the WebAuthn
- * specification (version 20190304) section 6.6.2.
- *
  * ### Unimplemented features
  *
  * **Backward compatibility with FIDO1**
  *
  * For more information about the backward compatibility of FIDO2 to FIDO1
- * refer to the [CTAP spec](https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html#u2f-interoperability).
+ * refer to the [CTAP specification](https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html#u2f-interoperability).
  *
  * **Support of further attestation types**
  *
@@ -172,11 +173,11 @@
  *  * Bluetooth Low Energy (BLE)
  *
  * For information about the available transport bindings refer to the
- * [CTAP spec](https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html#transport-specific-bindings).
+ * [CTAP specification](https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html#transport-specific-bindings).
  *
  * **Extensions**
  *
- * For information about CTAP extensions refer to the
+ * For information about CTAP extensions refer to the [CTAP specification](https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html#sctn-defined-extensions)
  *
  * **CTAP 2.1 support**
  *
@@ -184,7 +185,9 @@
  *
  * ### Testing
  *
- * For testing the FIDO2 CTAP implementation refer to the README of the test application ($(RIOTBASE)/tests/sys_fido2_ctap).
+ * Testing is done with the help of the fido2-tests package based on the [solokeys fido2-tests](https://github.com/solokeys/fido2-tests).
+ *
+ * For for more information about testing the FIDO2 CTAP implementation refer to the README of the test application (`/tests/sys_fido2_ctap`).
  *
  * ### Configuration
  *

@@ -4,13 +4,13 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 
-menuconfig MODULE_FIDO2_CTAP
+menuconfig KCONFIG_USEMODULE_FIDO2_CTAP
     bool "FIDO2 CTAP"
-    depends on TEST_KCONFIG
+    depends on USEMODULE_FIDO2_CTAP
     help
         Configure a FIDO2 CTAP authenticator via KConfig.
 
-if MODULE_FIDO2_CTAP
+if KCONFIG_USEMODULE_FIDO2_CTAP
 
 config FIDO2_CTAP_STACK_SIZE
     int "CTAP thread stack size"
@@ -26,16 +26,18 @@ config FIDO2_CTAP_DEVICE_AAGUID
 
 config FIDO2_CTAP_DISABLE_UP
     bool "Disable user presence tests"
-    default n
     help
         When set, the authenticator will not ask for permission before creating
         a new credential pair or authenticating.
 
 config FIDO2_CTAP_DISABLE_LED
     bool "Disable LED animations"
-    default n
     help
-        When set, the authenticator will not use LED's .
+        When set, the authenticator will not use LED's.
+
+config FIDO2_CTAP_UP_TIMEOUT
+    int "Seconds until user presence test times out"
+    default 15
 
 rsource "transport/Kconfig"
 

@@ -59,9 +59,9 @@ static int _RNG(uint8_t *dest, unsigned size)
     return 1;
 }
 
-int fido2_ctap_crypto_prng(uint8_t *buf, size_t size)
+int fido2_ctap_crypto_prng(uint8_t *buf, size_t len)
 {
-    random_bytes(buf, size);
+    random_bytes(buf, len);
     return CTAP2_OK;
 }
 

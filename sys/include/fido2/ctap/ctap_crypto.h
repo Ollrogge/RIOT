@@ -72,11 +72,11 @@ int fido2_ctap_crypto_init(void);
  * @brief Wrapper function for @ref random_bytes
  *
  * @param[in] buf   buffer to hold random bytes
- * @param[in] size  size of @p buf
+ * @param[in] len   length of @p buf
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_crypto_prng(uint8_t *buf, size_t size);
+int fido2_ctap_crypto_prng(uint8_t *buf, size_t len);
 
 /**
  * @brief Wrapper function for @ref sha256_init
@@ -234,11 +234,11 @@ int fido2_ctap_crypto_aes_enc(uint8_t *out, size_t *out_len, uint8_t * in,
  * @brief Decrypt data using AES-256-CBC
  *
  * @param[in] out              decrypted data
- * @param[in] out_len          len of @p out
+ * @param[in] out_len          length of @p out
  * @param[in] in               encrypted data
  * @param[in] in_len           len of @p in
  * @param[in] key              symmetric key to use for decryption
- * @param[in] key_len          len of @p key
+ * @param[in] key_len          length of @p key
  *
  * @return @ref ctap_status_codes_t
  */

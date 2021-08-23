@@ -41,6 +41,10 @@ extern "C" {
 
 /**
  * @brief Size of pin auth
+ *
+ * First 16 bytes of a HMAC-256.
+ *
+ * CTAP specification (version 20190130) section 5.5.8.2.
  */
 #define CTAP_PIN_AUTH_SZ 16
 
@@ -199,7 +203,7 @@ extern "C" {
 /**
  * @brief Size of pin token
  *
- * Needs to be a multiple of 16 bytes (AES block length)
+ * Needs to be a multiple of 16 bytes (AES block length).
  */
 #define CTAP_PIN_TOKEN_SZ 16
 
@@ -209,7 +213,7 @@ extern "C" {
  *
  * Needed if authenticator is unable to store resident keys.
  * See webauthn specification (version 20190304) section 4 (Credential ID)
- * for details
+ * for details.
  */
 #define CTAP_CRED_KEY_LEN 16
 
@@ -230,8 +234,7 @@ extern "C" {
 /**
  * @brief Total size of AES CCM credential id
  *
- * Size of encrypted resident key = resident key - cred id
- *                                        - has_nonce
+ * Size of encrypted resident key = resident key - cred id - has_nonce
  */
 #define CTAP_CREDENTIAL_ID_ENC_SIZE (sizeof(struct ctap_resident_key) - \
                                      sizeof(((struct ctap_resident_key *)0)-> \
@@ -242,7 +245,11 @@ extern "C" {
 /**
  * @brief Timeout for user presence test
  */
+#ifdef CONFIG_FIDO2_CTAP_UP_TIMEOUT
+#define CTAP_UP_TIMEOUT (CONFIG_FIDO2_CTAP_UP_TIMEOUT * US_PER_SEC)
+#else
 #define CTAP_UP_TIMEOUT (15 * US_PER_SEC)
+#endif
 
 /**
  * @brief Max time between call to get_assertion or get_next_assertion until
@@ -553,7 +560,7 @@ typedef struct {
 /**
  * @brief Create signature from authenticator data
  *
- * Used for attestation and assertion statement
+ * Used for attestation and assertion statement.
  *
  * @param[in] auth_data         authenticator data
  * @param[in] auth_data_len     length of @p auth_data

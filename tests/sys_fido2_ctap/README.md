@@ -3,6 +3,9 @@
 This test aims to test the FIDO2 CTAP implementation by creating a FIDO2
 authenticator which uses CTAPHID as communication protocol.
 
+Note:
+* This test application has only been tested on an nrf52840 DK.
+
 The test application requires at least 16536 bytes of stack memory which are
 divided as follows:
 * 512 bytes isr_stack
@@ -23,6 +26,8 @@ Note:
 will need to push button 1 on your device in order to show user presence.
 
 ### Unit testing
+Unit testing is based on the `fido2_tests` package.
+
 There are two test targets (fido2-test, fido2-test-up). The former requires no user
 interaction the latter does.
 
@@ -38,9 +43,9 @@ fido2-test-up
 1. Make sure that the CFLAG `CONFIG_FIDO2_CTAP_DISABLE_UP` is disabled as this test target
   requires user interaction.
 2. Flash the device with `make flash`.
-3. Run the unit tests by running `make fido2-test-up` and follow the instructions about when to show user presence.
+3. Run the unit tests by running `make fido2-test-up` and follow the instructions about when to show user presence (by pressing button 1).
 
 Note:
 * The tests require python 3.6+.
-* The unit tests will require you to reboot the authenticator multiple times. Be patient before continuing as it takes a few seconds for the connection
-  between OS and authenticator to be reestablished.
+* Running the tests for the first time will setup a virtual python environment (venv) and install python dependencies of the tests. To check the dependencies please refer to the `requirements.txt` of the [fido2-tests repository](https://github.com/solokeys/fido2-tests).
+* The unit tests will require you to reboot the authenticator multiple times. Be patient before continuing as it takes a few seconds for the connection between OS and authenticator to be re-established.

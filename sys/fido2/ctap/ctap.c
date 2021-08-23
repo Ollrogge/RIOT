@@ -69,35 +69,35 @@ typedef struct {
  *
  * CTAP specification (version 20190130) section 5.1
  */
-static int _make_credential(CborEncoder *encoder, ctap_req_t *req_raw);
+static int _make_credential(ctap_req_t *req_raw);
 
 /**
  * @brief GetAssertion method
  *
  * CTAP specification (version 20190130) section 5.2
  */
-static int _get_assertion(CborEncoder *encoder, ctap_req_t *req_raw);
+static int _get_assertion(ctap_req_t *req_raw);
 
 /**
  * @brief GetNextAssertion method
  *
  * CTAP specification (version 20190130) section 5.3
  */
-static int _get_next_assertion(CborEncoder *encoder);
+static int _get_next_assertion(void);
 
 /**
  * @brief GetInfo method
  *
  * CTAP specification (version 20190130) section 5.4
  */
-static int _get_info(CborEncoder *encoder);
+static int _get_info(void);
 
 /**
  * @brief ClientPIN method
  *
  * CTAP specification (version 20190130) section 5.5
  */
-static int _client_pin(CborEncoder *encoder, ctap_req_t *req_raw);
+static int _client_pin(ctap_req_t *req_raw);
 
 /*** CTAP clientPIN functions ***/
 
@@ -106,14 +106,14 @@ static int _client_pin(CborEncoder *encoder, ctap_req_t *req_raw);
  *
  * CTAP specification (version 20190130) section 5.5.3
  */
-static int _get_retries(CborEncoder *encoder);
+static int _get_retries(void);
 
 /**
  * @brief ClientPIN getKeyAgreement method
  *
  * CTAP specification (version 20190130) section 5.5.4
  */
-static int _get_key_agreement(CborEncoder *encoder);
+static int _get_key_agreement(void);
 
 /**
  * @brief ClientPIN setPIN method
@@ -134,7 +134,7 @@ static int _change_pin(ctap_client_pin_req_t *req);
  *
  * CTAP specification (version 20190130) section 5.5.7
  */
-static int _get_pin_token(CborEncoder *encoder, ctap_client_pin_req_t *req);
+static int _get_pin_token(ctap_client_pin_req_t *req);
 
 /*** helper functions ***/
 
@@ -279,11 +279,6 @@ static ctap_get_assertion_state_t _assert_state;
 static uint8_t _pin_token[CTAP_PIN_TOKEN_SZ];
 
 /**
- * @brief CBOR encoder
- */
-CborEncoder _encoder;
-
-/**
  * @brief remaining PIN attempts until authenticator is boot locked
  */
 static int _rem_pin_att_boot = CTAP_PIN_MAX_ATTS_BOOT;
@@ -393,12 +388,11 @@ size_t fido2_ctap_get_info(ctap_resp_t *resp)
 {
     assert(resp);
 
-    memset(&_encoder, 0, sizeof(_encoder));
-    cbor_encoder_init(&_encoder, resp->data, CTAP_MAX_MSG_SIZE, 0);
+    fido2_ctap_cbor_init_encoder(resp->data, sizeof(resp->data));
 
-    resp->status = _get_info(&_encoder);
+    resp->status = _get_info();
 
-    return cbor_encoder_get_buffer_size(&_encoder, resp->data);
+    return fido2_ctap_cbor_get_buffer_size(resp->data);
 }
 
 size_t fido2_ctap_make_credential(ctap_req_t *req, ctap_resp_t *resp)
@@ -406,12 +400,11 @@ size_t fido2_ctap_make_credential(ctap_req_t *req, ctap_resp_t *resp)
     assert(req);
     assert(resp);
 
-    memset(&_encoder, 0, sizeof(_encoder));
-    cbor_encoder_init(&_encoder, resp->data, CTAP_MAX_MSG_SIZE, 0);
+    fido2_ctap_cbor_init_encoder(resp->data, sizeof(resp->data));
 
-    resp->status = _make_credential(&_encoder, req);
+    resp->status = _make_credential(req);
 
-    return cbor_encoder_get_buffer_size(&_encoder, resp->data);
+    return fido2_ctap_cbor_get_buffer_size(resp->data);
 }
 
 size_t fido2_ctap_get_assertion(ctap_req_t *req, ctap_resp_t *resp)
@@ -419,24 +412,22 @@ size_t fido2_ctap_get_assertion(ctap_req_t *req, ctap_resp_t *resp)
     assert(req);
     assert(resp);
 
-    memset(&_encoder, 0, sizeof(_encoder));
-    cbor_encoder_init(&_encoder, resp->data, CTAP_MAX_MSG_SIZE, 0);
+    fido2_ctap_cbor_init_encoder(resp->data, sizeof(resp->data));
 
-    resp->status = _get_assertion(&_encoder, req);
+    resp->status = _get_assertion(req);
 
-    return cbor_encoder_get_buffer_size(&_encoder, resp->data);
+    return fido2_ctap_cbor_get_buffer_size(resp->data);
 }
 
 size_t fido2_ctap_get_next_assertion(ctap_resp_t *resp)
 {
     assert(resp);
 
-    memset(&_encoder, 0, sizeof(_encoder));
-    cbor_encoder_init(&_encoder, resp->data, CTAP_MAX_MSG_SIZE, 0);
+    fido2_ctap_cbor_init_encoder(resp->data, sizeof(resp->data));
 
-    resp->status = _get_next_assertion(&_encoder);
+    resp->status = _get_next_assertion();
 
-    return cbor_encoder_get_buffer_size(&_encoder, resp->data);
+    return fido2_ctap_cbor_get_buffer_size(resp->data);
 }
 
 size_t fido2_ctap_client_pin(ctap_req_t *req, ctap_resp_t *resp)
@@ -444,15 +435,14 @@ size_t fido2_ctap_client_pin(ctap_req_t *req, ctap_resp_t *resp)
     assert(req);
     assert(resp);
 
-    memset(&_encoder, 0, sizeof(_encoder));
-    cbor_encoder_init(&_encoder, resp->data, CTAP_MAX_MSG_SIZE, 0);
+    fido2_ctap_cbor_init_encoder(resp->data, sizeof(resp->data));
 
-    resp->status = _client_pin(&_encoder, req);
+    resp->status = _client_pin(req);
 
-    return cbor_encoder_get_buffer_size(&_encoder, resp->data);
+    return fido2_ctap_cbor_get_buffer_size(resp->data);
 }
 
-static int _make_credential(CborEncoder *encoder, ctap_req_t *req_raw)
+static int _make_credential(ctap_req_t *req_raw)
 {
     int ret;
     bool uv = false;
@@ -569,8 +559,7 @@ static int _make_credential(CborEncoder *encoder, ctap_req_t *req_raw)
         goto done;
     }
 
-    ret = fido2_ctap_cbor_encode_attestation_object(encoder, &auth_data,
-                                                    req.client_data_hash, &k);
+    ret = fido2_ctap_cbor_encode_attestation_object(&auth_data, req.client_data_hash, &k);
 
     if (ret != CTAP2_OK) {
         goto done;
@@ -592,7 +581,7 @@ done:
     return ret;
 }
 
-static int _get_assertion(CborEncoder *encoder, ctap_req_t *req_raw)
+static int _get_assertion(ctap_req_t *req_raw)
 {
     int ret;
     bool uv = false;
@@ -716,7 +705,7 @@ static int _get_assertion(CborEncoder *encoder, ctap_req_t *req_raw)
         goto done;
     }
 
-    ret = fido2_ctap_cbor_encode_assertion_object(encoder, &auth_data,
+    ret = fido2_ctap_cbor_encode_assertion_object(&auth_data,
                                                   req.client_data_hash, rk,
                                                   _assert_state.count);
 
@@ -751,7 +740,7 @@ done:
     return ret;
 }
 
-static int _get_next_assertion(CborEncoder *encoder)
+static int _get_next_assertion(void)
 {
     int ret;
     uint32_t now;
@@ -799,7 +788,7 @@ static int _get_next_assertion(CborEncoder *encoder)
     }
 
     /* cred count set to 0 because omitted when get_next_assertion */
-    ret = fido2_ctap_cbor_encode_assertion_object(encoder, &auth_data,
+    ret = fido2_ctap_cbor_encode_assertion_object(&auth_data,
                                                   _assert_state.client_data_hash, rk,
                                                   0);
 
@@ -834,7 +823,7 @@ done:
     return ret;
 }
 
-static int _get_info(CborEncoder *encoder)
+static int _get_info(void)
 {
     ctap_info_t info = { 0 };
 
@@ -845,10 +834,10 @@ static int _get_info(CborEncoder *encoder)
     info.pin_is_set = fido2_ctap_pin_is_set();
     memcpy(info.aaguid, _state.config.aaguid, CTAP_AAGUID_SIZE);
 
-    return fido2_ctap_cbor_encode_info(encoder, &info);
+    return fido2_ctap_cbor_encode_info(&info);
 }
 
-static int _client_pin(CborEncoder *encoder, ctap_req_t *req_raw)
+static int _client_pin(ctap_req_t *req_raw)
 {
     int ret;
     ctap_client_pin_req_t req = { 0 };
@@ -877,10 +866,10 @@ static int _client_pin(CborEncoder *encoder, ctap_req_t *req_raw)
 
     switch (req.sub_command) {
     case CTAP_CP_REQ_SUB_COMMAND_GET_RETRIES:
-        ret = _get_retries(encoder);
+        ret = _get_retries();
         break;
     case CTAP_CP_REQ_SUB_COMMAND_GET_KEY_AGREEMENT:
-        ret = _get_key_agreement(encoder);
+        ret = _get_key_agreement();
         break;
     case CTAP_CP_REQ_SUB_COMMAND_SET_PIN:
         ret = _set_pin(&req);
@@ -889,7 +878,7 @@ static int _client_pin(CborEncoder *encoder, ctap_req_t *req_raw)
         ret = _change_pin(&req);
         break;
     case CTAP_CP_REQ_SUB_COMMAND_GET_PIN_TOKEN:
-        ret = _get_pin_token(encoder, &req);
+        ret = _get_pin_token(&req);
         break;
     default:
         ret = CTAP1_ERR_OTHER;
@@ -900,12 +889,12 @@ static int _client_pin(CborEncoder *encoder, ctap_req_t *req_raw)
     return ret;
 }
 
-static int _get_retries(CborEncoder *encoder)
+static int _get_retries(void)
 {
-    return fido2_ctap_cbor_encode_retries(encoder, _state.rem_pin_att);
+    return fido2_ctap_cbor_encode_retries(_state.rem_pin_att);
 }
 
-static int _get_key_agreement(CborEncoder *encoder)
+static int _get_key_agreement(void)
 {
     int ret;
     ctap_public_key_cose_t key = { 0 };
@@ -928,7 +917,7 @@ static int _get_key_agreement(CborEncoder *encoder)
     key.crv = CTAP_COSE_KEY_CRV_P256;
     key.kty = CTAP_COSE_KEY_KTY_EC2;
 
-    return fido2_ctap_cbor_encode_key_agreement(encoder, &key);
+    return fido2_ctap_cbor_encode_key_agreement(&key);
 }
 
 static int _set_pin(ctap_client_pin_req_t *req)
@@ -1161,7 +1150,7 @@ done:
     return ret;
 }
 
-static int _get_pin_token(CborEncoder *encoder, ctap_client_pin_req_t *req)
+static int _get_pin_token(ctap_client_pin_req_t *req)
 {
     uint8_t shared_key[SHA256_DIGEST_LENGTH] = { 0 };
     uint8_t shared_secret[CTAP_CRYPTO_KEY_SIZE] = { 0 };
@@ -1247,7 +1236,7 @@ static int _get_pin_token(CborEncoder *encoder, ctap_client_pin_req_t *req)
         goto done;
     }
 
-    ret = fido2_ctap_cbor_encode_pin_token(encoder, pin_token_enc,
+    ret = fido2_ctap_cbor_encode_pin_token(pin_token_enc,
                                            sizeof(pin_token_enc));
 
 done:
