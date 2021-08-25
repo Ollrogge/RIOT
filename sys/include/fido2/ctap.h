@@ -206,8 +206,12 @@ size_t fido2_ctap_client_pin(ctap_req_t *req, ctap_resp_t *resp);
  * @brief Reset method
  *
  * CTAP specification (version 20190130) section 5.6
+ *
+ * @param[in, out] resp         CTAP response
+ *
+ * @return Length of @p resp->data
  */
-void fido2_ctap_reset(void);
+size_t fido2_ctap_reset(ctap_resp_t *resp);
 
 #ifdef __cplusplus
 }

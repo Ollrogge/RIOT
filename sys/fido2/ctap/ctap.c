@@ -99,6 +99,13 @@ static int _get_info(void);
  */
 static int _client_pin(ctap_req_t *req_raw);
 
+/**
+ * @brief Reset method
+ *
+ * CTAP specification (version 20190130) section 5.6
+ */
+static int _reset(void);
+
 /*** CTAP clientPIN functions ***/
 
 /**
@@ -290,7 +297,10 @@ int fido2_ctap_init(void)
 
     /* first startup of the device */
     if (_state.initialized_marker != CTAP_INITIALIZED_MARKER) {
-        fido2_ctap_reset();
+        ret = _reset();
+        if (ret != CTAP2_OK) {
+            return -EPROTO;
+        }
     }
 
 #if !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP)
@@ -322,33 +332,6 @@ int fido2_ctap_init(void)
     return 0;
 }
 
-void fido2_ctap_reset(void)
-{
-    _state.initialized_marker = CTAP_INITIALIZED_MARKER;
-    _state.rem_pin_att = CTAP_PIN_MAX_ATTS;
-    _state.pin_is_set = false;
-    _state.rk_amount_stored = 0;
-
-    _rem_pin_att_boot = CTAP_PIN_MAX_ATTS_BOOT;
-
-    /* invalidate AES CCM key */
-    memset(_state.cred_key, 0, sizeof(_state.cred_key));
-    _state.cred_key_is_initialized = false;
-
-    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_PLAT;
-    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_RK;
-    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_CLIENT_PIN;
-    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_UP;
-
-    uint8_t aaguid[CTAP_AAGUID_SIZE];
-
-    fmt_hex_bytes(aaguid, CTAP_AAGUID);
-
-    memcpy(_state.config.aaguid, aaguid, sizeof(_state.config.aaguid));
-
-    _write_state_to_flash(&_state);
-}
-
 size_t fido2_ctap_handle_request(ctap_req_t *req, ctap_resp_t *resp)
 {
     assert(req);
@@ -377,7 +360,7 @@ size_t fido2_ctap_handle_request(ctap_req_t *req, ctap_resp_t *resp)
         break;
     case CTAP_RESET:
         DEBUG("fido2_ctap: reset req \n");
-        fido2_ctap_reset();
+        return fido2_ctap_reset(resp);
         break;
     default:
         DEBUG("fido2_ctap: unknown req: %u \n", req->method);
@@ -444,6 +427,40 @@ size_t fido2_ctap_client_pin(ctap_req_t *req, ctap_resp_t *resp)
     resp->status = _client_pin(req);
 
     return fido2_ctap_cbor_get_buffer_size(resp->data);
+}
+
+size_t fido2_ctap_reset(ctap_resp_t *resp)
+{
+    resp->status = _reset();
+
+    return 0;
+}
+
+static int _reset(void)
+{
+    _state.initialized_marker = CTAP_INITIALIZED_MARKER;
+    _state.rem_pin_att = CTAP_PIN_MAX_ATTS;
+    _state.pin_is_set = false;
+    _state.rk_amount_stored = 0;
+
+    _rem_pin_att_boot = CTAP_PIN_MAX_ATTS_BOOT;
+
+    /* invalidate AES CCM key */
+    memset(_state.cred_key, 0, sizeof(_state.cred_key));
+    _state.cred_key_is_initialized = false;
+
+    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_PLAT;
+    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_RK;
+    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_CLIENT_PIN;
+    _state.config.options |= CTAP_INFO_OPTIONS_FLAG_UP;
+
+    uint8_t aaguid[CTAP_AAGUID_SIZE];
+
+    fmt_hex_bytes(aaguid, CTAP_AAGUID);
+
+    memcpy(_state.config.aaguid, aaguid, sizeof(_state.config.aaguid));
+
+    return _write_state_to_flash(&_state);
 }
 
 static int _make_credential(ctap_req_t *req_raw)
