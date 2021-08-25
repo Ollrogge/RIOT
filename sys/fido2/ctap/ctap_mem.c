@@ -78,3 +78,35 @@ uint16_t fido2_ctap_mem_get_max_rk_amount(void)
 {
     return _max_rk_amnt;
 }
+
+int fido2_ctap_mem_get_flashpage_number_of_rk(uint16_t rk_idx)
+{
+    uint16_t idx = 0;
+
+    for (unsigned i = CTAP_FLASH_RK_START_PAGE; i <= FLASHPAGE_NUMOF; i++) {
+        idx += flashpage_size(i) / CTAP_FLASH_RK_SZ;
+
+        if (idx >= rk_idx) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int fido2_ctap_mem_get_offset_of_rk_into_flashpage(uint16_t rk_idx)
+{
+    uint16_t idx = 0;
+    uint16_t old_idx = 0;
+
+    for (unsigned i = CTAP_FLASH_RK_START_PAGE; i <= FLASHPAGE_NUMOF; i++) {
+        old_idx = idx;
+        idx += flashpage_size(i) / CTAP_FLASH_RK_SZ;
+
+        if (idx >= rk_idx) {
+            return CTAP_FLASH_RK_SZ * (rk_idx - old_idx);
+        }
+    }
+
+    return -1;
+}

@@ -3,7 +3,7 @@ BOARD ?= nrf52840dk
 
 include ../Makefile.tests_common
 
-USEMODULE += fido2_ctap_hid
+USEMODULE += fido2_ctap_transport_hid
 USEPKG += fido2_tests
 
 USB_VID ?= $(USB_VID_TESTING)

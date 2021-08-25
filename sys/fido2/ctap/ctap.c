@@ -245,17 +245,6 @@ static inline bool _is_boot_locked(void);
 static inline bool _is_locked(void);
 
 /**
- * @brief Get flashpage number resident key with index @param rk_idx.
- */
-static inline uint16_t _get_flashpage_number_of_rk(uint16_t rk_idx);
-
-/**
- * @brief Get offset into flashpage where flashpage =
- *        _get_flashpage_number_of_rk(i)
- */
-static inline uint16_t _get_offset_of_rk_into_flashpage(uint16_t rk_idx);
-
-/**
  * @brief State of authenticator
  */
 static ctap_state_t _state;
@@ -1360,16 +1349,6 @@ static int _verify_pin_auth(uint8_t *auth, uint8_t *hash, size_t len)
     return CTAP2_OK;
 }
 
-static inline uint16_t _get_flashpage_number_of_rk(uint16_t rk_idx)
-{
-    return rk_idx / (flashpage_size(CTAP_FLASH_RK_START_PAGE) / CTAP_FLASH_RK_SZ);
-}
-
-static inline uint16_t _get_offset_of_rk_into_flashpage(uint16_t rk_idx)
-{
-    return CTAP_FLASH_RK_SZ * (rk_idx % (flashpage_size(CTAP_FLASH_RK_START_PAGE) / CTAP_FLASH_RK_SZ));
-}
-
 static bool _rks_exist(ctap_cred_desc_alt_t *li, size_t len, uint8_t *rp_id,
                        size_t rp_id_len)
 {
@@ -1398,8 +1377,17 @@ static bool _rks_exist(ctap_cred_desc_alt_t *li, size_t len, uint8_t *rp_id,
     }
 
     for (uint16_t i = 0; i < _state.rk_amount_stored; i++) {
-        uint16_t page_num = _get_flashpage_number_of_rk(i);
-        uint16_t offset_into_page = _get_offset_of_rk_into_flashpage(i);
+        int page_num = fido2_ctap_mem_get_flashpage_number_of_rk(i);
+
+        if (page_num < 0) {
+            return false;
+        }
+
+        int offset_into_page = fido2_ctap_mem_get_offset_of_rk_into_flashpage(i);
+
+        if (offset_into_page < 0) {
+            return false;
+        }
 
         ret = fido2_ctap_mem_read(&rk, CTAP_FLASH_RK_START_PAGE + page_num,
                     offset_into_page, sizeof(rk));
@@ -1461,8 +1449,17 @@ static uint8_t _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
     }
 
     for (int i = 0; i < _state.rk_amount_stored; i++) {
-        uint16_t page_num = _get_flashpage_number_of_rk(i);
-        uint16_t offset_into_page = _get_offset_of_rk_into_flashpage(i);
+        int page_num = fido2_ctap_mem_get_flashpage_number_of_rk(i);
+
+        if (page_num < 0) {
+            return CTAP1_ERR_OTHER;
+        }
+
+        int offset_into_page = fido2_ctap_mem_get_offset_of_rk_into_flashpage(i);
+
+        if (offset_into_page < 0) {
+            return CTAP1_ERR_OTHER;
+        }
 
         ret = fido2_ctap_mem_read(&rk, CTAP_FLASH_RK_START_PAGE + page_num,
                     offset_into_page, sizeof(rk));
@@ -1537,14 +1534,14 @@ static int _save_rk(ctap_resident_key_t *rk)
 
     if (_state.rk_amount_stored > 0) {
         for (uint16_t i = 0; i <= _state.rk_amount_stored; i++) {
-            page_num = _get_flashpage_number_of_rk(i);
-            offset_into_page = _get_offset_of_rk_into_flashpage(i);
+            page_num = fido2_ctap_mem_get_flashpage_number_of_rk(i);
+            offset_into_page = fido2_ctap_mem_get_offset_of_rk_into_flashpage(i);
 
             if (i == _state.rk_amount_stored) {
                 break;
             }
 
-            ret = fido2_ctap_mem_read( &rk_tmp, CTAP_FLASH_RK_START_PAGE + page_num,
+            ret = fido2_ctap_mem_read(&rk_tmp, CTAP_FLASH_RK_START_PAGE + page_num,
                          offset_into_page, sizeof(rk_tmp));
 
             if (ret != CTAP2_OK) {

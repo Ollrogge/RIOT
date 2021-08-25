@@ -782,7 +782,7 @@ endif
 ifneq (,$(filter fido2_ctap_%,$(USEMODULE)))
   USEMODULE += fido2_ctap_transport
   USEMODULE += fido2_ctap
-  ifneq (,$(filter fido2_ctap_hid,$(USEMODULE)))
+  ifneq (,$(filter fido2_ctap_transport_hid,$(USEMODULE)))
       ifneq (native, $(BOARD))
         USEMODULE += usbus_hid
         DISABLE_MODULE += auto_init_usbus

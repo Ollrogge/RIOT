@@ -88,6 +88,10 @@ int fido2_ctap_mem_init(void);
 
 uint16_t fido2_ctap_mem_get_max_rk_amount(void);
 
+int fido2_ctap_mem_get_offset_of_rk_into_flashpage(uint16_t rk_idx);
+
+int fido2_ctap_mem_get_flashpage_number_of_rk(uint16_t rk_idx);
+
 #ifdef __cplusplus
 }
 #endif
