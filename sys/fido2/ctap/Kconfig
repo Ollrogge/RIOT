@@ -39,6 +39,25 @@ config FIDO2_CTAP_UP_TIMEOUT
     int "Seconds until user presence test times out"
     default 15
 
+config FIDO2_CTAP_UP_BUTTON
+    int "Button pin to use for user presence"
+    default 0
+
+choice
+    bool "User presence button pin flank"
+    default FIDO2_CTAP_UP_BUTTON_FLANK_FALLING
+
+config FIDO2_CTAP_UP_BUTTON_FLANK_FALLING
+    bool "GPIO_FALLING"
+
+config FIDO2_CTAP_UP_BUTTON_FLANK_RISING
+    bool "GPIO_RISING"
+
+config FIDO2_CTAP_UP_BUTTON_FLANK_BOTH
+    bool "GPIO_BOTH"
+
+endchoice
+
 rsource "transport/Kconfig"
 
-endif # KCONFIG_FIDO2_CTAP
+endif # KCONFIG_USEMODULE_FIDO2_CTAP

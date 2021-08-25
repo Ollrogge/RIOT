@@ -62,12 +62,6 @@ extern "C" {
                              CTAP_FLASH_ALIGN_PAD(ctap_state_t))
 
 /**
- * @brief Max amount of resident keys that can be stored
- */
-#define CTAP_FLASH_MAX_RK (((FLASHPAGE_NUMOF - CTAP_FLASH_RK_START_PAGE) \
-                            * FLASHPAGE_SIZE) / CTAP_FLASH_RK_SZ)
-
-/**
  * @brief Write to flash memory and verify the written page against the given data
  *
  * @param[in] page      page to write to
@@ -77,7 +71,7 @@ extern "C" {
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_mem_write_and_verify(int page, int offset, const void *data, size_t len);
+int fido2_ctap_mem_write(const void *buf, uint32_t page, uint32_t offset, uint32_t size);
 
 /**
  * @brief Read flashpage into buf
@@ -88,7 +82,11 @@ int fido2_ctap_mem_write_and_verify(int page, int offset, const void *data, size
  * @param[in] buf        memory to write the page to
  *
  */
-void fido2_ctap_mem_read(int page, void *buf);
+int fido2_ctap_mem_read(void *buf, uint32_t page, uint32_t offset, uint32_t size);
+
+int fido2_ctap_mem_init(void);
+
+uint16_t fido2_ctap_mem_get_max_rk_amount(void);
 
 #ifdef __cplusplus
 }

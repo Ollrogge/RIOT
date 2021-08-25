@@ -27,9 +27,6 @@
 
 #include <stdint.h>
 
-#include "mutex.h"
-#include "cbor.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -104,15 +101,16 @@ typedef enum {
 } ctap_status_codes_t;
 /** @} */
 
+
 /**
  * @brief CTAP request struct
  *
  * CTAP specification (version 20190130) section 6.1
  */
 typedef struct {
-    uint8_t method; /**< CTAP method identitifer */
     uint8_t *buf;   /**< Buffer holding CBOR encoded data */
     size_t len;     /**< Length of buf */
+    uint8_t method; /**< CTAP method identitifer */
 } ctap_req_t;
 
 /**

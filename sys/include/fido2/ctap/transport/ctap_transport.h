@@ -36,16 +36,6 @@ extern "C" {
 #ifndef CTAP_TRANSPORT_PRIO
 #define CTAP_TRANSPORT_PRIO     (THREAD_PRIORITY_MAIN - 5)
 #endif
-
-/**
- * @brief CTAP supported transport prototocols
- */
-typedef enum {
-    USB,
-    NFC,
-    BLE
-} ctap_transport_type_t;
-
 /**
  * @brief Initialize ctap_transport layer and fido2_ctap
  */

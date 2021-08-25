@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include "fido2/ctap/ctap.h"
+#include "periph/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,7 +40,7 @@ void fido2_ctap_utils_led_animation(void);
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_utils_init_gpio_pin(void);
+int fido2_ctap_utils_init_gpio_pin(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank);
 
 /**
  * @brief Test user presence

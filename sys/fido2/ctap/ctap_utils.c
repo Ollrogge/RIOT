@@ -17,7 +17,7 @@
 
 #include <string.h>
 
-#include "xtimer.h"
+#include "ztimer.h"
 
 #include "fido2/ctap.h"
 #include "fido2/ctap/ctap_utils.h"
@@ -30,43 +30,49 @@
 #include "debug.h"
 
 #if !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP)
+
 /**
  * @brief Flag holding information if user is present or not
  */
 static bool _user_present = false;
 
 /**
+ * @brief GPIO pin to use for user presence test
+ */
+static gpio_t _pin;
+
+/**
  * @brief Button callback function
  */
 static void _gpio_cb(void *arg);
 
-int fido2_ctap_utils_init_gpio_pin(void)
+int fido2_ctap_utils_init_gpio_pin(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank)
 {
-    if (gpio_init_int(BTN0_PIN, BTN0_MODE, GPIO_FALLING, _gpio_cb, NULL) < 0) {
+    if (gpio_init_int(pin, mode, flank, _gpio_cb, NULL) < 0) {
         return CTAP1_ERR_OTHER;
     }
+
+    _pin = pin;
 
     return CTAP2_OK;
 }
 
 int fido2_ctap_utils_user_presence_test(void)
 {
-#ifdef BTN0_PIN
     int ret;
 
-    gpio_irq_enable(BTN0_PIN);
+    gpio_irq_enable(_pin);
 
 #if !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_LED)
     fido2_ctap_utils_led_animation();
 #endif
 
     ret = _user_present ? CTAP2_OK : CTAP2_ERR_ACTION_TIMEOUT;
-    gpio_irq_disable(BTN0_PIN);
+
+    gpio_irq_disable(_pin);
+
     _user_present = false;
     return ret;
-#else
-    return CTAP1_ERR_OTHER;
-#endif /* BTN0_PIN */
 }
 
 static void _gpio_cb(void *arg)
@@ -75,11 +81,12 @@ static void _gpio_cb(void *arg)
     _user_present = true;
 }
 
+#if !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_LED)
 void fido2_ctap_utils_led_animation(void)
 {
-    uint32_t start = xtimer_now_usec();
+    uint32_t start = ztimer_now(ZTIMER_MSEC);
     uint32_t diff = 0;
-    uint32_t delay = (500 * US_PER_MS);
+    uint32_t delay = 500;
 
     while (!_user_present && diff < CTAP_UP_TIMEOUT) {
 #ifdef LED0_TOGGLE
@@ -94,8 +101,8 @@ void fido2_ctap_utils_led_animation(void)
 #ifdef LED2_TOGGLE
         LED2_TOGGLE;
 #endif
-        xtimer_usleep(delay);
-        diff = xtimer_now_usec() - start;
+        ztimer_sleep(ZTIMER_MSEC, delay);
+        diff = ztimer_now(ZTIMER_MSEC) - start;
     }
 
 #ifdef LED0_TOGGLE
@@ -110,5 +117,6 @@ void fido2_ctap_utils_led_animation(void)
 #ifdef LED2_TOGGLE
     LED2_OFF;
 #endif
+#endif /* !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_LED) */
 }
 #endif /* CONFIG_FIDO2_CTAP_DISABLE_UP */

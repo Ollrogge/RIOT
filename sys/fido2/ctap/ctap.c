@@ -21,7 +21,7 @@
 
 #include "errno.h"
 #include "fmt.h"
-#include "xtimer.h"
+#include "ztimer.h"
 #include "byteorder.h"
 
 #include "fido2/ctap/transport/ctap_transport.h"
@@ -41,8 +41,8 @@
  * @brief CTAP authenticator config struct
  */
 typedef struct {
-    uint8_t options;                    /**< options */
     uint8_t aaguid[CTAP_AAGUID_SIZE];   /**< AAGUID of device */
+    uint8_t options;                    /**< options */
 } ctap_config_t;
 
 /**
@@ -51,15 +51,15 @@ typedef struct {
  * state of authenticator. Stored in flash memory
  */
 typedef struct {
-    uint8_t initialized_marker;                 /**< CTAP initialized marker */
-    bool pin_is_set;                            /**< PIN is set or not */
-    int rem_pin_att;                            /**< remaining PIN tries */
-    uint8_t pin_hash[SHA256_DIGEST_LENGTH / 2]; /**< LEFT(SHA-256(pin), 16) */
     ctap_config_t config;                       /**< configuration of authenticator */
+    ctap_crypto_key_agreement_key_t ag_key;     /**< Platform key agreement key */
+    int rem_pin_att;                            /**< remaining PIN tries */
     uint16_t rk_amount_stored;                  /**< total number of resident keys stored on device */
+    uint8_t initialized_marker;                 /**< CTAP initialized marker */
+    uint8_t pin_hash[SHA256_DIGEST_LENGTH / 2]; /**< LEFT(SHA-256(pin), 16) */
     uint8_t cred_key[CTAP_CRED_KEY_LEN];        /**< AES CCM encryption key for cred */
     bool cred_key_is_initialized;               /**< AES CCM key initialized flag */
-    ctap_crypto_key_agreement_key_t ag_key;     /**< Platform key agreement key */
+    bool pin_is_set;                            /**< PIN is set or not */
 } ctap_state_t;
 
 /*** CTAP methods ***/
@@ -200,7 +200,7 @@ static int _write_state_to_flash(const ctap_state_t *state);
 /**
  * @brief Read authenticator state from flash
  */
-static void _read_state_from_flash(ctap_state_t *state);
+static int _read_state_from_flash(ctap_state_t *state);
 
 /**
  * @brief Check if PIN protocol version is supported
@@ -287,7 +287,17 @@ int fido2_ctap_init(void)
 {
     int ret;
 
-    _read_state_from_flash(&_state);
+    ret = fido2_ctap_mem_init();
+
+    if (ret != CTAP2_OK) {
+        return -EPROTO;
+    }
+
+    ret = _read_state_from_flash(&_state);
+
+    if (ret != CTAP2_OK) {
+        return -EPROTO;
+    }
 
     /* first startup of the device */
     if (_state.initialized_marker != CTAP_INITIALIZED_MARKER) {
@@ -295,11 +305,15 @@ int fido2_ctap_init(void)
     }
 
 #if !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP)
-    ret = fido2_ctap_utils_init_gpio_pin();
+#ifdef BTN0_PIN
+    ret = fido2_ctap_utils_init_gpio_pin(CTAP_UP_BUTTON, CTAP_UP_BUTTON_MODE, CTAP_UP_BUTTON_FLANK);
     if (ret != CTAP2_OK) {
         return -EPROTO;
     }
-#endif
+#else
+    return -EIO;
+#endif /* BTN0_PIN */
+#endif /* !IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP) */
 
     ret = fido2_ctap_crypto_init();
 
@@ -342,6 +356,7 @@ void fido2_ctap_reset(void)
     fmt_hex_bytes(aaguid, CTAP_AAGUID);
 
     memcpy(_state.config.aaguid, aaguid, sizeof(_state.config.aaguid));
+
     _write_state_to_flash(&_state);
 }
 
@@ -728,7 +743,7 @@ static int _get_assertion(ctap_req_t *req_raw)
     }
 
     /* save current time for get_next_assertion timeout */
-    _assert_state.timer = xtimer_now_usec();
+    _assert_state.timer = ztimer_now(ZTIMER_MSEC);
 
     ret = CTAP2_OK;
 
@@ -768,7 +783,7 @@ static int _get_next_assertion(void)
         goto done;
     }
 
-    now = xtimer_now_usec();
+    now = ztimer_now(ZTIMER_MSEC);
     if (now - _assert_state.timer > CTAP_GET_NEXT_ASSERTION_TIMEOUT) {
         memset(&_assert_state, 0, sizeof(_assert_state));
         ret = CTAP2_ERR_NOT_ALLOWED;
@@ -797,7 +812,7 @@ static int _get_next_assertion(void)
     }
 
     /* restart timer */
-    _assert_state.timer = xtimer_now_usec();
+    _assert_state.timer = ztimer_now(ZTIMER_MSEC);
 
     rk->sign_count++;
 
@@ -1347,12 +1362,12 @@ static int _verify_pin_auth(uint8_t *auth, uint8_t *hash, size_t len)
 
 static inline uint16_t _get_flashpage_number_of_rk(uint16_t rk_idx)
 {
-    return rk_idx / (FLASHPAGE_SIZE / CTAP_FLASH_RK_SZ);
+    return rk_idx / (flashpage_size(CTAP_FLASH_RK_START_PAGE) / CTAP_FLASH_RK_SZ);
 }
 
 static inline uint16_t _get_offset_of_rk_into_flashpage(uint16_t rk_idx)
 {
-    return CTAP_FLASH_RK_SZ * (rk_idx % (FLASHPAGE_SIZE / CTAP_FLASH_RK_SZ));
+    return CTAP_FLASH_RK_SZ * (rk_idx % (flashpage_size(CTAP_FLASH_RK_START_PAGE) / CTAP_FLASH_RK_SZ));
 }
 
 static bool _rks_exist(ctap_cred_desc_alt_t *li, size_t len, uint8_t *rp_id,
@@ -1383,14 +1398,15 @@ static bool _rks_exist(ctap_cred_desc_alt_t *li, size_t len, uint8_t *rp_id,
     }
 
     for (uint16_t i = 0; i < _state.rk_amount_stored; i++) {
-        uint16_t page_offset = _get_flashpage_number_of_rk(i);
-        uint16_t page_offset_into_page = _get_offset_of_rk_into_flashpage(i);
+        uint16_t page_num = _get_flashpage_number_of_rk(i);
+        uint16_t offset_into_page = _get_offset_of_rk_into_flashpage(i);
 
-        if (page_offset_into_page == 0) {
-            fido2_ctap_mem_read(CTAP_FLASH_RK_START_PAGE + page_offset, page);
+        ret = fido2_ctap_mem_read(&rk, CTAP_FLASH_RK_START_PAGE + page_num,
+                    offset_into_page, sizeof(rk));
+
+        if (ret != CTAP2_OK) {
+            return false;
         }
-
-        memcpy(&rk, page + page_offset_into_page, sizeof(rk));
 
         if (memcmp(rk.rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0) {
             for (size_t j = 0; j < len; j++) {
@@ -1448,11 +1464,12 @@ static uint8_t _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
         uint16_t page_num = _get_flashpage_number_of_rk(i);
         uint16_t offset_into_page = _get_offset_of_rk_into_flashpage(i);
 
-        if (offset_into_page == 0) {
-            fido2_ctap_mem_read(CTAP_FLASH_RK_START_PAGE + page_num, page);
-        }
+        ret = fido2_ctap_mem_read(&rk, CTAP_FLASH_RK_START_PAGE + page_num,
+                    offset_into_page, sizeof(rk));
 
-        memcpy(&rk, page + offset_into_page, sizeof(rk));
+        if (ret != CTAP2_OK) {
+            return ret;
+        }
 
         /* search for rk's matching rp_id_hash */
         if (memcmp(rk.rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0) {
@@ -1510,14 +1527,11 @@ static uint8_t _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
  */
 static int _save_rk(ctap_resident_key_t *rk)
 {
-    bool equal = false;
     int ret;
     uint16_t page_num = 0, offset_into_page = 0;
-    uint8_t page[FLASHPAGE_SIZE] = { 0 };
-    uint8_t buf[CTAP_FLASH_RK_SZ] = { 0 };
-    ctap_resident_key_t rk_temp = { 0 };
+    ctap_resident_key_t rk_tmp = { 0 };
 
-    if (_state.rk_amount_stored >= CTAP_FLASH_MAX_RK) {
+    if (_state.rk_amount_stored >= fido2_ctap_mem_get_max_rk_amount()) {
         return CTAP2_ERR_KEY_STORE_FULL;
     }
 
@@ -1530,51 +1544,23 @@ static int _save_rk(ctap_resident_key_t *rk)
                 break;
             }
 
-            /* beginning of a new page, read from flash */
-            if (offset_into_page == 0) {
-                fido2_ctap_mem_read(CTAP_FLASH_RK_START_PAGE + page_num, page);
+            ret = fido2_ctap_mem_read( &rk_tmp, CTAP_FLASH_RK_START_PAGE + page_num,
+                         offset_into_page, sizeof(rk_tmp));
+
+            if (ret != CTAP2_OK) {
+                return CTAP1_ERR_OTHER;
             }
 
-            memcpy(&rk_temp, page + offset_into_page, sizeof(rk_temp));
-
             /* if equal overwrite */
-            if (fido2_ctap_utils_ks_equal(&rk_temp, rk)) {
-                equal = true;
+            if (fido2_ctap_utils_ks_equal(&rk_tmp, rk)) {
                 break;
             }
         }
     }
 
-    memcpy(buf, rk, sizeof(*rk));
+    return fido2_ctap_mem_write(&rk, CTAP_FLASH_RK_START_PAGE + page_num,
+                             offset_into_page, sizeof(rk));
 
-    if (!equal) {
-        ret = fido2_ctap_mem_write_and_verify(CTAP_FLASH_RK_START_PAGE + page_num,
-                                              offset_into_page, buf,
-                                              sizeof(buf));
-
-        if (ret != CTAP2_OK) {
-            return ret;
-        }
-
-        _state.rk_amount_stored++;
-        ret = _write_state_to_flash(&_state);
-
-        if (ret != CTAP2_OK) {
-            return ret;
-        }
-    }
-    else {
-        /* update page by moving new rk value into page */
-        memcpy(page + offset_into_page, buf, sizeof(buf));
-        ret = fido2_ctap_mem_write_and_verify(CTAP_FLASH_RK_START_PAGE + page_num,
-                                              0, page, sizeof(page));
-
-        if (ret != CTAP2_OK) {
-            return ret;
-        }
-    }
-
-    return CTAP2_OK;
 }
 
 static int _make_auth_data_assert(uint8_t *rp_id, size_t rp_id_len,
@@ -1675,7 +1661,7 @@ static int _make_auth_data_attest(ctap_make_credential_req_t *req,
     /* init key */
     k->cred_desc.cred_type = req->cred_type;
     k->user_id_len = user->id_len;
-    k->creation_time = xtimer_now_usec64();
+    k->creation_time = ztimer_now(ZTIMER_MSEC);
 
     memcpy(k->user_id, user->id, user->id_len);
     memcpy(k->rp_id_hash, auth_header->rp_id_hash, SHA256_DIGEST_LENGTH);
@@ -1787,27 +1773,12 @@ static int _ctap_decrypt_rk(ctap_resident_key_t *rk, ctap_cred_id_t *id)
 
 static int _write_state_to_flash(const ctap_state_t *state)
 {
-    uint8_t page[CTAP_FLASH_STATE_SZ] = { 0 };
-    int ret;
-
-    memcpy(page, state, sizeof(*state));
-
-    ret =
-        fido2_ctap_mem_write_and_verify(CTAP_FLASH_STATE_PAGE, 0, page, sizeof(page));
-
-    if (ret != CTAP2_OK) {
-        return ret;
-    }
-
-    return CTAP2_OK;
+    return fido2_ctap_mem_write(state, CTAP_FLASH_STATE_PAGE, 0, sizeof(*state));
 }
 
-static void _read_state_from_flash(ctap_state_t *state)
+static int _read_state_from_flash(ctap_state_t *state)
 {
-    uint8_t page[FLASHPAGE_SIZE] = { 0 };
-
-    fido2_ctap_mem_read(CTAP_FLASH_STATE_PAGE, page);
-    memcpy(state, page, sizeof(*state));
+    return fido2_ctap_mem_read(state, CTAP_FLASH_STATE_PAGE, 0, sizeof(*state));
 }
 
 int fido2_ctap_get_sig(const uint8_t *auth_data, size_t auth_data_len,

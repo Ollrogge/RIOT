@@ -800,8 +800,9 @@ ifneq (,$(filter fido2_ctap,$(USEMODULE)))
 
   INCLUDE += $(RIOTPKG)/tinycbor
 
-  USEMODULE += periph_flashpage_pagewise
-  USEMODULE += xtimer
+  USEMODULE += mtd_flashpage
+  USEMODULE += mtd_write_page
+  USEMODULE += ztimer_msec
   USEMODULE += event
   USEMODULE += event_timeout
   USEMODULE += prng_sha256prng

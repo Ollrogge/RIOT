@@ -15,10 +15,8 @@
  * @}
  */
 
-#define ENABLE_DEBUG    (0)
 #include <string.h>
 
-#include "debug.h"
 #include "assert.h"
 #include "random.h"
 
@@ -32,6 +30,9 @@
 #include "fido2/ctap/ctap_crypto.h"
 #include "fido2/ctap.h"
 #include "fido2/ctap/ctap_utils.h"
+
+#define ENABLE_DEBUG    (0)
+#include "debug.h"
 
 /**
  * @brief Parse signature into ASN.1 DER format

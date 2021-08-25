@@ -31,6 +31,7 @@
 #include "cbor.h"
 #include "assert.h"
 #include "crypto/modes/ccm.h"
+#include "timex.h"
 
 #include "fido2/ctap.h"
 #include "fido2/ctap/ctap_crypto.h"
@@ -131,6 +132,24 @@ extern "C" {
 #define CTAP_STACKSIZE 15000
 #endif
 
+#ifdef CONFIG_FIDO2_CTAP_UP_BUTTON
+#define CTAP_UP_BUTTON BTN_##CONFIG_FIDO2_CTAP_UP_BUTTON##_PIN
+#define CTAP_UP_BUTTON_MODE BTN_##CONFIG_FIDO2_CTAP_UP_BUTTON##_MODE
+#else
+#define CTAP_UP_BUTTON BTN0_PIN
+#define CTAP_UP_BUTTON_MODE BTN0_MODE
+#endif
+
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_UP_BUTTON_FLANK_FALLING)
+#define CTAP_UP_BUTTON_FLANK GPIO_FALLING
+#elif IS_ACTIVE(CONFIG_FIDO2_CTAP_UP_BUTTON_FLANK_RISING)
+#define CTAP_UP_BUTTON_FLANK GPIO_RISING
+#elif IS_ACTIVE(CONFIG_FIDO2_CTAP_UP_BUTTON_FLANK_BOTH)
+#define CTAP_UP_BUTTON_FLANK GPIO_BOTH
+#else
+#define CTAP_UP_BUTTON_FLANK GPIO_FALLING
+#endif
+
 /**
  * @brief Max size of relying party name
  */
@@ -207,7 +226,6 @@ extern "C" {
  */
 #define CTAP_PIN_TOKEN_SZ 16
 
-
 /**
  * @brief Size of key used to encrypt credential
  *
@@ -246,16 +264,16 @@ extern "C" {
  * @brief Timeout for user presence test
  */
 #ifdef CONFIG_FIDO2_CTAP_UP_TIMEOUT
-#define CTAP_UP_TIMEOUT (CONFIG_FIDO2_CTAP_UP_TIMEOUT * US_PER_SEC)
+#define CTAP_UP_TIMEOUT (CONFIG_FIDO2_CTAP_UP_TIMEOUT * MS_PER_SEC)
 #else
-#define CTAP_UP_TIMEOUT (15 * US_PER_SEC)
+#define CTAP_UP_TIMEOUT (15 * MS_PER_SEC)
 #endif
 
 /**
  * @brief Max time between call to get_assertion or get_next_assertion until
  * error is returned
  */
-#define CTAP_GET_NEXT_ASSERTION_TIMEOUT (30 * US_PER_SEC)
+#define CTAP_GET_NEXT_ASSERTION_TIMEOUT (30 * MS_PER_SEC)
 
 /**
  * 128 bit identifier of authenticator
@@ -380,9 +398,9 @@ typedef struct {
  */
 typedef struct {
     ctap_crypto_pub_key_t pubkey;   /**< public key */
+    long alg_type;                  /**< COSEAlgorithmIdentifier */
     int kty;                        /**< identification of key type */
     int crv;                        /**< EC identifier */
-    int32_t alg_type;               /**< COSEAlgorithmIdentifier */
     uint8_t cred_type;              /**< type of credential */
 } ctap_public_key_cose_t;
 
@@ -392,11 +410,11 @@ typedef struct {
  * Webauthn specification (version 20190304) section 5.8.3
  */
 struct ctap_cred_desc {
-    uint8_t cred_type;                              /**< type of credential */
     union {
         uint8_t cred_id[CTAP_CREDENTIAL_ID_SIZE];   /**< credential identifier */
         uint8_t nonce[CTAP_AES_CCM_NONCE_SIZE];     /**< CTAP AES CCM nonce */
     };
+    uint8_t cred_type;                              /**< type of credential */
     bool has_nonce;                                 /**< Indicate if nonce or
                                                          cred_id  */
 };
@@ -500,7 +518,7 @@ typedef struct {
     ctap_resident_key_t rks[CTAP_MAX_EXCLUDE_LIST_SIZE];    /**< eligible resident keys found */
     uint8_t count;                                          /**< number of rks found  */
     uint8_t cred_counter;                                   /**< amount of creds sent to host */
-    uint32_t timer;                                         /**< time gap between get_next_assertion calls  */
+    uint32_t timer;                                         /**< time gap between get_next_assertion calls in microseconds  */
     bool uv;                                                /**< indicate if user verified */
     bool up;                                                /**< indicate if user present */
     uint8_t client_data_hash[SHA256_DIGEST_LENGTH];         /**< SHA-256 hash of JSON serialized client data */

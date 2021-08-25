@@ -15,8 +15,6 @@
  * @}
  */
 
-#include "xtimer.h"
-
 #include "fido2/ctap/ctap_cbor.h"
 
 #define ENABLE_DEBUG    (0)

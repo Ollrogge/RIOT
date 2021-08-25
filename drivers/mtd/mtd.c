@@ -164,7 +164,7 @@ int mtd_write_page(mtd_dev_t *mtd, const void *data, uint32_t page,
     /* erase sector */
     res = mtd_erase_sector(mtd, sector, 1);
     if (res < 0) {
-        return res;
+        return res; 
     }
 
     /* modify sector in RAM */
