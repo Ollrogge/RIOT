@@ -22,7 +22,7 @@
 
 #include "fido2/ctap/ctap_mem.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 /**
@@ -67,7 +67,7 @@ int fido2_ctap_mem_write(const void *buf, uint32_t page, uint32_t offset, uint32
 {
     assert(buf);
 
-    if (mtd_write_page(&_mtd_dev, buf, page, offset, size) < 0) {
+    if (mtd_write_page_raw(&_mtd_dev, buf, page, offset, size) < 0) {
         return CTAP1_ERR_OTHER;
     }
 

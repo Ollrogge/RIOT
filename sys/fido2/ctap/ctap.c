@@ -30,11 +30,11 @@
 #include "fido2/ctap/ctap_cbor.h"
 #include "fido2/ctap/ctap_mem.h"
 
-#if IS_USED(MODULE_FIDO2_CTAP_HID)
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
 #include "fido2/ctap/transport/hid/ctap_hid.h"
 #endif
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 /**
@@ -169,7 +169,7 @@ static int _make_auth_data_next_assert(uint8_t *rp_id_hash,
 /**
  * @brief Find most recent rk matching rp_id_hash and present in allow_list
  */
-static uint8_t _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
+static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
                                   ctap_cred_desc_alt_t *allow_list,
                                   size_t allow_list_len,
                                   uint8_t *rp_id, size_t rp_id_len);
@@ -558,7 +558,7 @@ static int _make_credential(ctap_req_t *req_raw)
     }
 
     /* last moment where transaction can be cancelled */
-#if IS_USED(MODULE_FIDO2_CTAP_HID)
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
     if (fido2_ctap_transport_hid_should_cancel()) {
         ret = CTAP2_ERR_KEEPALIVE_CANCEL;
         goto done;
@@ -711,7 +711,7 @@ static int _get_assertion(ctap_req_t *req_raw)
     rk = &_assert_state.rks[_assert_state.cred_counter++];
 
     /* last moment where transaction can be cancelled */
-#if IS_USED(MODULE_FIDO2_CTAP_HID)
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
     if (fido2_ctap_transport_hid_should_cancel()) {
         ret = CTAP2_ERR_KEEPALIVE_CANCEL;
         goto done;
@@ -1005,7 +1005,7 @@ static int _set_pin(ctap_client_pin_req_t *req)
     }
 
     /* last moment where transaction can be cancelled */
-#if IS_USED(MODULE_FIDO2_CTAP_HID)
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
     if (fido2_ctap_transport_hid_should_cancel()) {
         ret = CTAP2_ERR_KEEPALIVE_CANCEL;
         goto done;
@@ -1110,7 +1110,7 @@ static int _change_pin(ctap_client_pin_req_t *req)
     }
 
     /* last moment where transaction can be cancelled */
-#if IS_USED(MODULE_FIDO2_CTAP_HID)
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
     if (fido2_ctap_transport_hid_should_cancel()) {
         ret = CTAP2_ERR_KEEPALIVE_CANCEL;
         goto done;
@@ -1199,7 +1199,7 @@ static int _get_pin_token(ctap_client_pin_req_t *req)
     }
 
     /* last moment where transaction can be cancelled */
-#if IS_USED(MODULE_FIDO2_CTAP_HID)
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
     if (fido2_ctap_transport_hid_should_cancel()) {
         ret = CTAP2_ERR_KEEPALIVE_CANCEL;
         goto done;
@@ -1435,7 +1435,7 @@ static bool _rks_exist(ctap_cred_desc_alt_t *li, size_t len, uint8_t *rp_id,
     return false;
 }
 
-static uint8_t _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
+static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
                                   ctap_cred_desc_alt_t *allow_list,
                                   size_t allow_list_len, uint8_t *rp_id,
                                   size_t rp_id_len)
@@ -1542,7 +1542,7 @@ static uint8_t _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
 static int _save_rk(ctap_resident_key_t *rk)
 {
     int ret;
-    uint16_t page_num = 0, offset_into_page = 0;
+    int page_num = 0, offset_into_page = 0;
     ctap_resident_key_t rk_tmp = { 0 };
 
     if (_state.rk_amount_stored >= fido2_ctap_mem_get_max_rk_amount()) {
@@ -1552,7 +1552,16 @@ static int _save_rk(ctap_resident_key_t *rk)
     if (_state.rk_amount_stored > 0) {
         for (uint16_t i = 0; i <= _state.rk_amount_stored; i++) {
             page_num = fido2_ctap_mem_get_flashpage_number_of_rk(i);
+
+            if (page_num < 0) {
+                return CTAP1_ERR_OTHER;
+            }
+
             offset_into_page = fido2_ctap_mem_get_offset_of_rk_into_flashpage(i);
+
+            if (offset_into_page < 0) {
+                return CTAP1_ERR_OTHER;
+            }
 
             if (i == _state.rk_amount_stored) {
                 break;
