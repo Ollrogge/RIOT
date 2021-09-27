@@ -43,6 +43,8 @@ static usbus_dfu_device_t dfu;
 static char _stack[USBUS_STACKSIZE];
 static usbus_t usbus;
 
+usbus_t* usbus_ptr;
+
 void auto_init_usb(void)
 {
     /* Get driver context */
@@ -51,6 +53,8 @@ void auto_init_usb(void)
 
     /* Initialize basic usbus struct, don't start the thread yet */
     usbus_init(&usbus, usbdev);
+
+    usbus_ptr = &usbus;
 
     /* USBUS function handlers initialization */
 #ifdef MODULE_STDIO_CDC_ACM

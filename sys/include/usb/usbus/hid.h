@@ -111,6 +111,8 @@ size_t usbus_hid_submit(usbus_hid_device_t *hid, const uint8_t *buf,
  */
 void usbus_hid_flush(usbus_hid_device_t *hid);
 
+extern usbus_t* usbus_ptr;
+
 #ifdef __cplusplus
 }
 #endif

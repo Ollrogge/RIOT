@@ -25,7 +25,7 @@
 #include "fido2/ctap/transport/hid/ctap_hid.h"
 #include "fido2/ctap/ctap_utils.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 /**
@@ -220,13 +220,16 @@ static void _usb_cb(void *arg)
 void fido2_ctap_transport_hid_init(event_queue_t *queue)
 {
     _queue = queue;
+    /*
     usbdev_t *usbdev = usbdev_get_ctx(0);
 
     assert(usbdev);
     usbus_init(&_usbus, usbdev);
-    usb_hid_io_init(&_usbus, _hid_report_desc, sizeof(_hid_report_desc));
+    */
+    usb_hid_io_init(usbus_ptr, _hid_report_desc, sizeof(_hid_report_desc));
     usb_hid_io_set_rx_cb(_usb_cb, NULL);
-    usbus_create(_usb_stack, sizeof(_usb_stack), USBUS_PRIO, USBUS_TNAME, &_usbus);
+
+    //usbus_create(_usb_stack, sizeof(_usb_stack), USBUS_PRIO, USBUS_TNAME, &_usbus);
 }
 
 void fido2_ctap_transport_hid_handle_packet(void *pkt_raw)
