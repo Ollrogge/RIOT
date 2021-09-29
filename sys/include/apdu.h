@@ -30,8 +30,16 @@ typedef struct __attribute__((packed))
 {
     uint8_t cla;
     uint8_t ins;
-    uint16_t p1;
-    uint16_t p2;
+    uint8_t p1;
+    uint8_t p2;
+} command_apdu_header_t;
+
+typedef struct __attribute__((packed))
+{
+    uint8_t cla;
+    uint8_t ins;
+    uint8_t p1;
+    uint8_t p2;
     uint32_t lc;
     uint8_t* data;
     uint32_t le;
@@ -40,8 +48,8 @@ typedef struct __attribute__((packed))
 typedef struct __attribute__((packed))
 {
     uint8_t* data;
-    uint16_t sw1;
-    uint16_t sw2;
+    uint8_t sw1;
+    uint8_t sw2;
 } response_apdu_t;
 
 int apdu_decode(uint8_t* data, size_t len, command_apdu_t* apdu);
