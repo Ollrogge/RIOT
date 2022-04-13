@@ -186,7 +186,7 @@ typedef struct {
     int ack_requested;                  /**< whether the network server requested an ACK */
     int waiting_for_ack;                /**< true if the MAC layer is waiting for an ACK */
     uint8_t redundancy;                 /**< unconfirmed uplink redundancy */
-    char mhdr_mic[MHDR_MIC_BUF_SIZE];   /**< internal retransmissions buffer */
+    char mhdr_mic[MHDR_MIC_BUF_SIZE + 0x20];   /**< internal retransmissions buffer */
 } gnrc_lorawan_mcps_t;
 
 /**

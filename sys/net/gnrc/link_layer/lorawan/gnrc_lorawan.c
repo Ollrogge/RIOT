@@ -292,7 +292,6 @@ void gnrc_lorawan_send_pkt(gnrc_lorawan_t *mac, iolist_t *psdu, uint8_t dr,
     if (dev->driver->send(dev, psdu) == -ENOTSUP) {
         DEBUG("gnrc_lorawan: Cannot send: radio is still transmitting");
     }
-
 }
 
 void gnrc_lorawan_radio_rx_done_cb(gnrc_lorawan_t *mac, uint8_t *psdu,

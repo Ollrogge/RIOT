@@ -40,6 +40,10 @@ static void _build_join_req_pkt(uint8_t *joineui, uint8_t *deveui,
     lorawan_hdr_set_mtype((lorawan_hdr_t *)hdr, MTYPE_JOIN_REQUEST);
     lorawan_hdr_set_maj((lorawan_hdr_t *)hdr, MAJOR_LRWAN_R1);
 
+#if IS_ACTIVE(CONFIG_FIDO2_LORAWAN)
+    memset(hdr->fido_data, 0x45, sizeof(hdr->fido_data));
+#endif
+
     le_uint64_t l_joineui = *((le_uint64_t *)joineui);
     le_uint64_t l_deveui = *((le_uint64_t *)deveui);
 

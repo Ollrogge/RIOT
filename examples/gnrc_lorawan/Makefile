@@ -62,6 +62,8 @@ ifndef CONFIG_KCONFIG_USEMODULE_LORAWAN
   CFLAGS += -DCONFIG_LORAMAC_JOIN_EUI_DEFAULT=\"BBBBBBBBBBBBBBBB\"
   CFLAGS += -DCONFIG_LORAMAC_DEV_EUI_DEFAULT=\"CCCCCCCCCCCCCCCC\"
 
+  CFLAGS += -DCONFIG_FIDO2_LORAWAN
+
   # For TTN, It's necessary to set the RX2 DR to 3 in EU_868 region
   # CFLAGS += -DCONFIG_LORAMAC_DEFAULT_RX2_DR_3
 
@@ -78,7 +80,7 @@ ifndef CONFIG_KCONFIG_USEMODULE_LORAWAN
   ## For FIT-IoT Lab usage. Use the highest DR since gateway is nearby.
   # If uncommented, the default value (DR0) is used.
   # Note this value is also used for the OTAA.
-  # CFLAGS += -DCONFIG_LORAMAC_DEFAULT_DR_5
+  CFLAGS += -DCONFIG_LORAMAC_DEFAULT_DR_5
 
   # # Set default messages to unconfirmable
   CFLAGS += -DCONFIG_LORAMAC_DEFAULT_TX_MODE_UNCNF
