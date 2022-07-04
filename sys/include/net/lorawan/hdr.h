@@ -98,9 +98,6 @@ typedef struct __attribute__((packed)) {
     le_uint64_t join_eui;                       /**< join EUI. Mapped to app EUI if LoRaWAN 1.0x */
     le_uint64_t dev_eui;                        /**< device EUI */
     le_uint16_t dev_nonce;                      /**< device nonce */
-#if IS_ACTIVE(CONFIG_FIDO2_LORAWAN)
-    uint8_t fido_data[0x10];
-#endif
     le_uint32_t mic;                            /**< message integrity code */
 } lorawan_join_request_t;
 

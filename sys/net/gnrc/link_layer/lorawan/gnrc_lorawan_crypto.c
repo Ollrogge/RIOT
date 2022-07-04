@@ -70,11 +70,16 @@ typedef struct  __attribute__((packed)) {
     uint8_t len;
 } lorawan_block1_t;
 
-void gnrc_lorawan_calculate_join_req_mic(const uint8_t *buf, size_t len,
+void gnrc_lorawan_calculate_join_req_mic(const uint8_t *buf, iolist_t* fido_data, size_t len,
                                          uint8_t *key, le_uint32_t *out)
 {
     aes128_cmac_init(&CmacContext, key, LORAMAC_APPKEY_LEN);
     aes128_cmac_update(&CmacContext, buf, len);
+    if (fido_data) {
+        for (iolist_t* io = fido_data; io != NULL; io = io->iol_next) {
+            aes128_cmac_update(&CmacContext, io->iol_base, io->iol_len);
+        }
+    }
     aes128_cmac_final(&CmacContext, digest);
 
     memcpy(out, digest, sizeof(le_uint32_t));

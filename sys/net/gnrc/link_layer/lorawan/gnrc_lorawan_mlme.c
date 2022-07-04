@@ -30,8 +30,8 @@
 #define ENABLE_DEBUG 0
 #include "debug.h"
 
-static void _build_join_req_pkt(uint8_t *joineui, uint8_t *deveui,
-                                uint8_t *key, uint8_t *dev_nonce,
+static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
+                                uint8_t *deveui, uint8_t *key, uint8_t *dev_nonce,
                                 uint8_t *psdu)
 {
     lorawan_join_request_t *hdr = (lorawan_join_request_t *)psdu;
@@ -41,7 +41,7 @@ static void _build_join_req_pkt(uint8_t *joineui, uint8_t *deveui,
     lorawan_hdr_set_maj((lorawan_hdr_t *)hdr, MAJOR_LRWAN_R1);
 
 #if IS_ACTIVE(CONFIG_FIDO2_LORAWAN)
-    memset(hdr->fido_data, 0x45, sizeof(hdr->fido_data));
+    mac->mcps.msdu = gnrc_lorawan_fido_join_req1();
 #endif
 
     le_uint64_t l_joineui = *((le_uint64_t *)joineui);
@@ -54,7 +54,7 @@ static void _build_join_req_pkt(uint8_t *joineui, uint8_t *deveui,
 
     hdr->dev_nonce = l_dev_nonce;
 
-    gnrc_lorawan_calculate_join_req_mic(psdu, JOIN_REQUEST_SIZE - MIC_SIZE, key,
+    gnrc_lorawan_calculate_join_req_mic(psdu, mac->mcps.msdu, JOIN_REQUEST_SIZE - MIC_SIZE, key,
                                         &hdr->mic);
 }
 
@@ -99,8 +99,9 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
     mac->last_dr = dr;
     mac->state = LORAWAN_STATE_JOIN;
 
+
     /* Use the buffer for MHDR */
-    _build_join_req_pkt(eui, deveui, key, mac->mlme.dev_nonce, (uint8_t *)mac->mcps.mhdr_mic);
+    _build_join_req_pkt(mac, eui, deveui, key, mac->mlme.dev_nonce, (uint8_t *)mac->mcps.mhdr_mic);
 
     /* We need a random delay for join request. Otherwise there might be
      * network congestion if a group of nodes start at the same time */
