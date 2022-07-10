@@ -27,7 +27,7 @@
 
 #include "net/lorawan/hdr.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
@@ -40,9 +40,12 @@ static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
     lorawan_hdr_set_mtype((lorawan_hdr_t *)hdr, MTYPE_JOIN_REQUEST);
     lorawan_hdr_set_maj((lorawan_hdr_t *)hdr, MAJOR_LRWAN_R1);
 
-#if IS_ACTIVE(CONFIG_FIDO2_LORAWAN)
-    mac->mcps.msdu = gnrc_lorawan_fido_join_req1();
-#endif
+    if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
+        mac->mcps.msdu = gnrc_lorawan_fido_join_req1();
+    }
+    else {
+        mac->mcps.msdu = NULL;
+    }
 
     le_uint64_t l_joineui = *((le_uint64_t *)joineui);
     le_uint64_t l_deveui = *((le_uint64_t *)deveui);
@@ -54,14 +57,37 @@ static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
 
     hdr->dev_nonce = l_dev_nonce;
 
-    gnrc_lorawan_calculate_join_req_mic(psdu, mac->mcps.msdu, JOIN_REQUEST_SIZE - MIC_SIZE, key,
-                                        &hdr->mic);
+    gnrc_lorawan_calculate_join_req_mic(psdu, JOIN_REQUEST_SIZE - MIC_SIZE,
+                                        mac->mcps.msdu, key, &hdr->mic);
 }
 
 void gnrc_lorawan_trigger_join(gnrc_lorawan_t *mac)
 {
-    iolist_t pkt = { .iol_base = mac->mcps.mhdr_mic, .iol_len =
-                         sizeof(lorawan_join_request_t), .iol_next = NULL };
+    iolist_t pkt = { 0 };
+    iolist_t footer;
+    if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
+        // -0x4 because we have payload and need to put MIC afterwards
+        pkt.iol_base = mac->mcps.mhdr_mic;
+        pkt.iol_len = sizeof(lorawan_join_request_t) - MIC_SIZE;
+        pkt.iol_next = mac->mcps.msdu;
+
+        iolist_t *last_snip = mac->mcps.msdu;
+        while (last_snip->iol_next != NULL) {
+            last_snip = last_snip->iol_next;
+        }
+
+        footer.iol_base = mac->mcps.mhdr_mic + pkt.iol_len;
+        footer.iol_len = MIC_SIZE;
+        footer.iol_next = NULL;
+
+        last_snip->iol_next = &footer;
+    }
+    else {
+        (void)footer;
+        pkt.iol_base = mac->mcps.mhdr_mic;
+        pkt.iol_len = sizeof(lorawan_join_request_t);
+        pkt.iol_next = NULL;
+    }
 
     mac->last_chan_idx = gnrc_lorawan_pick_channel(mac);
     gnrc_lorawan_send_pkt(mac, &pkt, mac->last_dr,
@@ -98,7 +124,6 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
 
     mac->last_dr = dr;
     mac->state = LORAWAN_STATE_JOIN;
-
 
     /* Use the buffer for MHDR */
     _build_join_req_pkt(mac, eui, deveui, key, mac->mlme.dev_nonce, (uint8_t *)mac->mcps.mhdr_mic);

@@ -24,7 +24,7 @@
 #include "net/lorawan/hdr.h"
 
 #include "fmt.h"
-#define ENABLE_DEBUG      0
+#define ENABLE_DEBUG      1
 #include "debug.h"
 
 #define MIC_B0_START (0x49)
@@ -70,8 +70,9 @@ typedef struct  __attribute__((packed)) {
     uint8_t len;
 } lorawan_block1_t;
 
-void gnrc_lorawan_calculate_join_req_mic(const uint8_t *buf, iolist_t* fido_data, size_t len,
-                                         uint8_t *key, le_uint32_t *out)
+void gnrc_lorawan_calculate_join_req_mic(const uint8_t *buf, size_t len,
+                                        iolist_t* fido_data, uint8_t *key,
+                                        le_uint32_t *out)
 {
     aes128_cmac_init(&CmacContext, key, LORAMAC_APPKEY_LEN);
     aes128_cmac_update(&CmacContext, buf, len);

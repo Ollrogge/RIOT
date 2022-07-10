@@ -11,7 +11,7 @@ uint8_t buf[0x1 + sizeof(ctap_resp_t)];
 iolist_t *gnrc_lorawan_fido_join_req1(void)
 {
     //set byte 0 to indicate type of request (begin)
-    buf[0] = 0x0;
+    buf[0] = 0x41;
 
     _data.iol_next = NULL;
     _data.iol_base = buf;

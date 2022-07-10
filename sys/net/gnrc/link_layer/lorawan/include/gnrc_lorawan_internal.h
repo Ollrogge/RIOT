@@ -390,7 +390,7 @@ void gnrc_lorawan_process_fopts(gnrc_lorawan_t *mac, uint8_t *fopts,
  * @param[in] key key to be used to calculate the MIC
  * @param[out] out calculated MIC
  */
-void gnrc_lorawan_calculate_join_req_mic(const uint8_t *buf, iolist_t* fido_data, size_t len,
+void gnrc_lorawan_calculate_join_req_mic(const uint8_t *buf, size_t len, iolist_t* fido_data,
                                          uint8_t *key, le_uint32_t *out);
 
 /**
