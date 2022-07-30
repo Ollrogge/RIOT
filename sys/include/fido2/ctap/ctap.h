@@ -51,19 +51,6 @@ extern "C" {
 #define CTAP_PIN_AUTH_SZ 16
 
 /**
- * @name CTAP methods
- *
- * @{
- */
-#define CTAP_MAKE_CREDENTIAL                0x01 /**< authenticatorMakeCredential method */
-#define CTAP_GET_ASSERTION                  0x02 /**< authenticatorGetAssertion method */
-#define CTAP_GET_INFO                       0x04 /**< authenticatorGetInfo method */
-#define CTAP_CLIENT_PIN                     0x06 /**< authenticatorClientPIN method */
-#define CTAP_RESET                          0x07 /**< authenticatorReset method */
-#define CTAP_GET_NEXT_ASSERTION             0x08 /**< authenticatorGetNextAssertion method */
-/** @} */
-
-/**
  * @name CTAP authenticator data option flags
  *
  * @{
@@ -680,6 +667,8 @@ int fido2_ctap_encrypt_rk(ctap_resident_key_t *rk, uint8_t *nonce,
  * @return false otherwise
  */
 bool fido2_ctap_pin_is_set(void);
+
+bool fido2_ctap_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash);
 
 #ifdef __cplusplus
 }

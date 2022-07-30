@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include "mutex.h"
 #include "timex.h"
+#include "event/timeout.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,6 +42,8 @@ extern "C" {
  * @brief Initialize ctap_transport layer and fido2_ctap
  */
 void fido2_ctap_transport_init(void);
+
+event_queue_t* fido2_ctap_transport_get_event_queue(void);
 
 #ifdef __cplusplus
 }

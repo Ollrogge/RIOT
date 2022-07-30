@@ -7,7 +7,7 @@ USEMODULE += shell
 USEMODULE += shell_cmds_default
 USEMODULE += ps
 
-DRIVER ?= sx1276
+DRIVER ?= sx1272
 
 # use SX1276 by default
 USEMODULE += $(DRIVER)

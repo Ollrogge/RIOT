@@ -119,7 +119,7 @@ int fido2_ctap_crypto_hmac_sha256(const void *key,
 }
 
 int fido2_ctap_crypto_ecdh(uint8_t *out, size_t len,
-                           ctap_crypto_pub_key_t *pub_key, uint8_t *priv_key, size_t key_len)
+                           uint8_t *pub_key, uint8_t *priv_key, size_t key_len)
 {
     assert(len == CTAP_CRYPTO_KEY_SIZE);
     assert(key_len == CTAP_CRYPTO_KEY_SIZE);
@@ -127,7 +127,7 @@ int fido2_ctap_crypto_ecdh(uint8_t *out, size_t len,
     int ret;
     const struct uECC_Curve_t *curve = uECC_secp256r1();
 
-    ret = uECC_shared_secret((uint8_t *)pub_key, priv_key, out, curve);
+    ret = uECC_shared_secret(pub_key, priv_key, out, curve);
 
     if (ret == 0) {
         return CTAP1_ERR_OTHER;
@@ -242,15 +242,12 @@ int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out, size_t out_len,
     return CTAP2_OK;
 }
 
-int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key,
-                                  uint8_t *priv_key, size_t len)
+int fido2_ctap_crypto_gen_keypair(uint8_t *pub_key, uint8_t *priv_key)
 {
-    assert(len == CTAP_CRYPTO_KEY_SIZE);
-
     int ret;
     const struct uECC_Curve_t *curve = uECC_secp256r1();
 
-    ret = uECC_make_key((uint8_t *)pub_key, priv_key, curve);
+    ret = uECC_make_key(pub_key, priv_key, curve);
     if (ret == 0) {
         return CTAP1_ERR_OTHER;
     }

@@ -249,8 +249,15 @@ typedef struct {
     uint8_t dev_nonce[2];           /**< Device Nonce */
 } gnrc_lorawan_persistent_state_t;
 
-iolist_t *gnrc_lorawan_fido_join_req1(void);
+typedef enum {
+    FIDO_LORA_GA_BEGIN = 0x2,
+    FIDO_LORA_GA_FINISH = 0x3
+} fido_lora_state_t;
 
+fido_lora_state_t gnrc_lorawan_fido_get_state(void);
+iolist_t *gnrc_lorawan_fido_join_req(void);
+int gnrc_lorawan_fido_join_accpt(uint8_t* data, size_t size);
+int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui);
 /**
  * @brief Encrypts LoRaWAN payload
  *
@@ -294,6 +301,9 @@ void gnrc_lorawan_encrypt_fopts(uint8_t *fopts, size_t len,
  */
 void gnrc_lorawan_decrypt_join_accept(const uint8_t *key, uint8_t *pkt,
                                       int has_clist, uint8_t *out);
+
+void gnrc_lorawan_fido_decrypt_join_accept(const uint8_t *key, uint8_t *pkt,
+                                      size_t size, uint8_t *out);
 
 /**
  * @brief Generate LoRaWAN session keys

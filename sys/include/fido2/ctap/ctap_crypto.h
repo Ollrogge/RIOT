@@ -184,7 +184,7 @@ int fido2_ctap_crypto_hmac_sha256(const void *key,
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key, uint8_t *priv_key, size_t len);
+int fido2_ctap_crypto_gen_keypair(uint8_t *pub_key, uint8_t *priv_key);
 
 /**
  * @brief Elliptic-curve Diffie-Hellmann
@@ -198,7 +198,7 @@ int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key, uint8_t *priv_
  * @return @ref ctap_status_codes_t
  */
 int fido2_ctap_crypto_ecdh(uint8_t *out, size_t len,
-                           ctap_crypto_pub_key_t *pub_key, uint8_t *priv_key, size_t key_len);
+                           uint8_t *pub_key, uint8_t *priv_key, size_t key_len);
 
 /**
  * @brief Create cryptographic signature

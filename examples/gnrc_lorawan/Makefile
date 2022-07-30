@@ -28,7 +28,7 @@ USEMODULE += shell_cmds_default
 USEMODULE += gnrc_txtsnd
 
 # Uncomment as needed if a board doesn't include a LoRa radio by default
-# USEMODULE += sx1272
+USEMODULE += sx1272
 # USEMODULE += sx1276
 
 # As there is an 'app.config' we want to explicitly disable Kconfig by setting
@@ -61,8 +61,9 @@ ifndef CONFIG_KCONFIG_USEMODULE_LORAWAN
   CFLAGS += -DCONFIG_LORAMAC_APP_EUI_DEFAULT=\"BBBBBBBBBBBBBBBB\"
   CFLAGS += -DCONFIG_LORAMAC_JOIN_EUI_DEFAULT=\"BBBBBBBBBBBBBBBB\"
   CFLAGS += -DCONFIG_LORAMAC_DEV_EUI_DEFAULT=\"CCCCCCCCCCCCCCCC\"
+  #cccccccccccccccc
 
-  CFLAGS += -DCONFIG_FIDO2_LORAWAN
+  CFLAGS += -DCONFIG_FIDO2_LORAWAN=1
 
   # For TTN, It's necessary to set the RX2 DR to 3 in EU_868 region
   # CFLAGS += -DCONFIG_LORAMAC_DEFAULT_RX2_DR_3

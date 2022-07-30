@@ -41,7 +41,10 @@ static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
     lorawan_hdr_set_maj((lorawan_hdr_t *)hdr, MAJOR_LRWAN_R1);
 
     if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
-        mac->mcps.msdu = gnrc_lorawan_fido_join_req1();
+        int ret = gnrc_lorawan_fido_derive_root_keys(mac, deveui);
+        //todo: what to do if this fails ?
+        (void)ret;
+        mac->mcps.msdu = gnrc_lorawan_fido_join_req();
     }
     else {
         mac->mcps.msdu = NULL;
@@ -102,9 +105,23 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
          * DevNonce starting at 0 when device is powered up and incremented with
          * every Join-request.
          */
+
+        /*
         uint16_t dev_nonce = byteorder_lebuftohs(mac->mlme.dev_nonce);
+        DEBUG("Dev nonce: %u \n", dev_nonce);
         byteorder_htolebufs(mac->mlme.dev_nonce, ++dev_nonce);
         gnrc_lorawan_store_dev_nonce(mac->mlme.dev_nonce);
+        */
+
+        netdev_t *dev = gnrc_lorawan_get_netdev(mac);
+
+        /* Dev Nonce */
+        uint32_t random_number;
+
+        dev->driver->get(dev, NETOPT_RANDOM, &random_number, sizeof(random_number));
+
+        mac->mlme.dev_nonce[0] = random_number & 0xFF;
+        mac->mlme.dev_nonce[1] = (random_number >> 8) & 0xFF;
 
         gnrc_lorawan_generate_lifetime_session_keys(deveui, mac->ctx.nwksenckey,
                                                     gnrc_lorawan_get_jsintkey(mac),
@@ -140,7 +157,7 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
 void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
                                     size_t size)
 {
-    int status;
+    int status = -EBADMSG;
     mlme_confirm_t mlme_confirm;
 
     if (mac->mlme.activation != MLME_ACTIVATION_NONE) {
@@ -148,17 +165,23 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
         goto out;
     }
 
-    if (size != GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - CFLIST_SIZE &&
+    if (!IS_ACTIVE(CONFIG_FIDO2_LORAWAN) &&
+        size != GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - CFLIST_SIZE &&
         size != GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE) {
         status = -EBADMSG;
         goto out;
     }
 
     /* Subtract 1 from join accept max size, since the MHDR was already read */
-    uint8_t out[GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - 1];
+    uint8_t out[GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - 1 + 0x40];
     uint8_t has_cflist = (size - 1) > CFLIST_SIZE;
 
-    gnrc_lorawan_decrypt_join_accept(mac->ctx.nwksenckey, data + 1, has_cflist, out);
+    if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
+        gnrc_lorawan_fido_decrypt_join_accept(mac->ctx.nwksenckey, data + 1, size - 0x1, out);
+    }
+    else {
+        gnrc_lorawan_decrypt_join_accept(mac->ctx.nwksenckey, data + 1, has_cflist, out);
+    }
 
     memcpy(data + 1, out, size - 1);
 
@@ -173,43 +196,68 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
 
     gnrc_lorawan_calculate_join_acpt_mic(data, size - MIC_SIZE, mac, &mic);
 
+    DEBUG("MICS: %lx %lx \n", mic.u32, expected_mic->u32);
+
     if (mic.u32 != expected_mic->u32) {
         DEBUG("gnrc_lorawan_mlme: wrong MIC.\n");
         status = -EBADMSG;
         goto out;
     }
 
-    void *joineui = IS_USED(MODULE_GNRC_LORAWAN_1_1) ? mac->joineui : NULL;
+    if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN) &&
+        gnrc_lorawan_fido_get_state() == FIDO_LORA_GA_BEGIN) {
+        // skip MHDR field + join accept stuff (MHDR at offset 0)
+        uint8_t off = sizeof(lorawan_join_accept_t);
+        // TODO: fido and cflist are optional and fido has dynamic size.
+        // how to determine if cflist exists ?
+        // for now assume it is always set
+        off += 0x10;
 
-    gnrc_lorawan_generate_session_keys(ja_hdr->join_nonce,
+        int ret = gnrc_lorawan_fido_join_accpt(data + off, size - off - MIC_SIZE);
+        if (ret < 0) {
+            DEBUG("gnrc_lorawan_mlme: FIDO failed.\n");
+            status = -EBADMSG;
+            goto out;
+        }
+
+        // fail for now because we aren't done
+        status = -EBADMSG;
+        DEBUG("GA_BEGIN finished. 'ifconfig 3 up' to start phase 2. \n");
+    }
+    // do normal stuff when fido authentication flow is done
+    else if (!IS_ACTIVE(CONFIG_FIDO2_LORAWAN) ||
+        gnrc_lorawan_fido_get_state() == FIDO_LORA_GA_FINISH) {
+            void *joineui = IS_USED(MODULE_GNRC_LORAWAN_1_1) ? mac->joineui : NULL;
+
+            gnrc_lorawan_generate_session_keys(ja_hdr->join_nonce,
                                        mac->mlme.dev_nonce, joineui, mac);
 
-    le_uint32_t le_nid;
+            le_uint32_t le_nid;
 
-    le_nid.u32 = 0;
-    memcpy(&le_nid, ja_hdr->net_id, 3);
-    mac->mlme.nid = byteorder_ltohl(le_nid);
-    /* Copy devaddr */
-    memcpy(&mac->dev_addr, ja_hdr->dev_addr, sizeof(mac->dev_addr));
+            le_nid.u32 = 0;
+            memcpy(&le_nid, ja_hdr->net_id, 3);
+            mac->mlme.nid = byteorder_ltohl(le_nid);
+            /* Copy devaddr */
+            memcpy(&mac->dev_addr, ja_hdr->dev_addr, sizeof(mac->dev_addr));
 
-    mac->dl_settings = ja_hdr->dl_settings;
+            mac->dl_settings = ja_hdr->dl_settings;
 
-    /* delay 0 maps to 1 second */
-    mac->rx_delay = ja_hdr->rx_delay ? ja_hdr->rx_delay : 1;
+            /* delay 0 maps to 1 second */
+            mac->rx_delay = ja_hdr->rx_delay ? ja_hdr->rx_delay : 1;
 
-    if (has_cflist) {
-        gnrc_lorawan_process_cflist(mac, out + sizeof(lorawan_join_accept_t) - 1);
-    }
+            if (has_cflist) {
+                gnrc_lorawan_process_cflist(mac, out + sizeof(lorawan_join_accept_t) - 1);
+            }
 
-    DEBUG("gnrc_lorawan: Channel mask is %04x\n", mac->channel_mask);
-    mac->mlme.activation = MLME_ACTIVATION_OTAA;
-    status = GNRC_LORAWAN_REQ_STATUS_SUCCESS;
+            DEBUG("gnrc_lorawan: Channel mask is %04x\n", mac->channel_mask);
+            mac->mlme.activation = MLME_ACTIVATION_OTAA;
+            status = GNRC_LORAWAN_REQ_STATUS_SUCCESS;
 
-    /* schedule rekey indication command */
-    if (IS_USED(MODULE_GNRC_LORAWAN_1_1) && gnrc_lorawan_optneg_is_set(mac)) {
-        mac->mlme.pending_mlme_opts |= GNRC_LORAWAN_MLME_OPTS_REKEY_IND_REQ;
-    }
-
+            /* schedule rekey indication command */
+            if (IS_USED(MODULE_GNRC_LORAWAN_1_1) && gnrc_lorawan_optneg_is_set(mac)) {
+                mac->mlme.pending_mlme_opts |= GNRC_LORAWAN_MLME_OPTS_REKEY_IND_REQ;
+            }
+        }
 out:
     mlme_confirm.type = MLME_JOIN;
     mlme_confirm.status = status;

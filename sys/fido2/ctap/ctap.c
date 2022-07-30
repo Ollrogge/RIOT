@@ -916,8 +916,7 @@ static int _get_key_agreement(void)
 
     /* generate key agreement key */
     ret =
-        fido2_ctap_crypto_gen_keypair(&_state.ag_key.pub, _state.ag_key.priv,
-                                      sizeof(_state.ag_key.priv));
+        fido2_ctap_crypto_gen_keypair((uint8_t*)&_state.ag_key.pub, _state.ag_key.priv);
 
     if (ret != CTAP2_OK) {
         return ret;
@@ -960,7 +959,7 @@ static int _set_pin(ctap_client_pin_req_t *req)
     }
 
     ret = fido2_ctap_crypto_ecdh(shared_secret, sizeof(shared_secret),
-                                 &req->key_agreement.pubkey, _state.ag_key.priv,
+                                 (uint8_t*)&req->key_agreement.pubkey, _state.ag_key.priv,
                                  sizeof(_state.ag_key.priv));
 
     if (ret != CTAP2_OK) {
@@ -1052,7 +1051,7 @@ static int _change_pin(ctap_client_pin_req_t *req)
 
     /* derive shared secret */
     ret = fido2_ctap_crypto_ecdh(shared_secret, sizeof(shared_secret),
-                                 &req->key_agreement.pubkey, _state.ag_key.priv,
+                                 (uint8_t*)&req->key_agreement.pubkey, _state.ag_key.priv,
                                  sizeof(_state.ag_key.priv));
     if (ret != CTAP2_OK) {
         goto done;
@@ -1116,8 +1115,7 @@ static int _change_pin(ctap_client_pin_req_t *req)
 
         /* reset key agreement key */
         ret =
-            fido2_ctap_crypto_gen_keypair(&_state.ag_key.pub, _state.ag_key.priv,
-                                          sizeof(_state.ag_key.priv));
+            fido2_ctap_crypto_gen_keypair((uint8_t*)&_state.ag_key.pub, _state.ag_key.priv);
 
         if (ret != CTAP2_OK) {
             goto done;
@@ -1184,7 +1182,7 @@ static int _get_pin_token(ctap_client_pin_req_t *req)
     }
 
     ret = fido2_ctap_crypto_ecdh(shared_secret, sizeof(shared_secret),
-                                 &req->key_agreement.pubkey, _state.ag_key.priv,
+                                 (uint8_t*)&req->key_agreement.pubkey, _state.ag_key.priv,
                                  sizeof(_state.ag_key.priv));
 
     if (ret != CTAP2_OK) {
@@ -1221,8 +1219,7 @@ static int _get_pin_token(ctap_client_pin_req_t *req)
 
         /* reset key agreement key */
         ret =
-            fido2_ctap_crypto_gen_keypair(&_state.ag_key.pub, _state.ag_key.priv,
-                                          sizeof(_state.ag_key.priv));
+            fido2_ctap_crypto_gen_keypair((uint8_t*)&_state.ag_key.pub, _state.ag_key.priv);
 
         if (ret != CTAP2_OK) {
             goto done;
@@ -1665,8 +1662,7 @@ static int _make_auth_data_attest(ctap_make_credential_req_t *req,
     memcpy(cred_header->aaguid, aaguid, sizeof(cred_header->aaguid));
 
     ret =
-        fido2_ctap_crypto_gen_keypair(&cred_data->key.pubkey, k->priv_key,
-                                      sizeof(_state.ag_key.priv));
+        fido2_ctap_crypto_gen_keypair((uint8_t *)&cred_data->key.pubkey, k->priv_key);
 
     if (ret != CTAP2_OK) {
         return ret;
@@ -1843,4 +1839,9 @@ int fido2_ctap_get_sig(const uint8_t *auth_data, size_t auth_data_len,
     return fido2_ctap_crypto_get_sig(hash, sizeof(hash), sig, sig_len,
                                      rk->priv_key,
                                      sizeof(rk->priv_key));
+}
+
+bool fido2_ctap_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash)
+{
+    return fido2_ctap_mem_get_rk(key, rp_id_hash, _state.rk_amount_stored);
 }

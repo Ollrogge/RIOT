@@ -15,8 +15,6 @@
  * @}
  */
 
-#include "event/timeout.h"
-
 #include "fido2/ctap/transport/ctap_transport.h"
 #include "fido2/ctap/ctap.h"
 
@@ -100,4 +98,9 @@ void fido2_ctap_transport_init(void)
 
     (void)ret;
     assert(ret > 0);
+}
+
+event_queue_t* fido2_ctap_transport_get_event_queue(void)
+{
+    return &_queue;
 }

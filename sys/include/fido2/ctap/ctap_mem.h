@@ -169,7 +169,7 @@ unsigned fido2_ctap_mem_get_rk_start_page(void);
  * @return @ref ctap_status_codes_t
  */
 int fido2_ctap_mem_erase_flash(void);
-
+bool fido2_ctap_mem_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash, unsigned max);
 #ifdef __cplusplus
 }
 #endif

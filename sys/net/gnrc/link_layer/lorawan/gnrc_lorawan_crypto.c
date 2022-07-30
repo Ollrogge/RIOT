@@ -290,6 +290,16 @@ void gnrc_lorawan_decrypt_join_accept(const uint8_t *key, uint8_t *pkt,
     }
 }
 
+void gnrc_lorawan_fido_decrypt_join_accept(const uint8_t *key, uint8_t *pkt,
+                                      size_t size, uint8_t *out)
+{
+    cipher_init(&AesContext, CIPHER_AES, key, LORAMAC_APPKEY_LEN);
+    for (size_t i = 0; i < size / LORAMAC_APPKEY_LEN; i++) {
+        cipher_encrypt(&AesContext, pkt + i * LORAMAC_APPKEY_LEN,
+                    out + i * LORAMAC_APPKEY_LEN);
+    }
+}
+
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
 void gnrc_lorawan_generate_lifetime_session_keys(const uint8_t *deveui,
                                                  const uint8_t *nwkkey,

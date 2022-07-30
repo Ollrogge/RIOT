@@ -22,7 +22,7 @@
 
 #include "fido2/ctap/ctap_mem.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 /**
@@ -164,4 +164,35 @@ int fido2_ctap_mem_erase_flash(void)
     }
 
     return CTAP2_OK;
+}
+
+bool fido2_ctap_mem_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash, unsigned max)
+{
+    uint32_t start = (uint32_t)flashpage_addr(fido2_ctap_mem_flash_page() + CTAP_FLASH_RK_OFF);
+    unsigned seen = 0x0;
+    unsigned off = 0x0;
+    bool found = false;
+    uint32_t latest = 0x0;
+    ctap_resident_key_t tmp = {0};
+
+    for (size_t i = 0; i < max; i++) {
+        int ret = mtd_read(_mtd_dev, &tmp, start + off, sizeof(ctap_resident_key_t));
+
+        if (ret < 0) {
+            DEBUG("read failed \n");
+        }
+
+        if (memcmp(tmp.rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0x0) {
+            if (key->creation_time > latest) {
+                memcpy(key, &tmp, sizeof(ctap_resident_key_t));
+                latest = key->creation_time;
+            }
+
+            found = true;
+        }
+
+        off += CTAP_FLASH_RK_SZ;
+    }
+
+    return found;
 }

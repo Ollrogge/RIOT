@@ -37,7 +37,7 @@
 /**
  * @brief   Define stack parameters for the MAC layer thread
  */
-#define SX127X_STACKSIZE           (GNRC_NETIF_STACKSIZE_DEFAULT)
+#define SX127X_STACKSIZE           (THREAD_STACKSIZE_DEFAULT*0x2)
 #ifndef SX127X_PRIO
 #define SX127X_PRIO                (GNRC_NETIF_PRIO)
 #endif

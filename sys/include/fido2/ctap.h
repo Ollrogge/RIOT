@@ -101,6 +101,15 @@ typedef enum {
 } ctap_status_codes_t;
 /** @} */
 
+typedef enum {
+    CTAP_MAKE_CREDENTIAL    =   0x01,
+    CTAP_GET_ASSERTION      =   0x02,
+    CTAP_GET_INFO           =   0x04,
+    CTAP_CLIENT_PIN         =   0x06,
+    CTAP_RESET              =   0x07,
+    CTAP_GET_NEXT_ASSERTION =   0x08
+} ctap_methods_t;
+
 /**
  * @brief CTAP request struct
  *
@@ -120,6 +129,7 @@ typedef struct {
 typedef struct {
     uint8_t status;                     /**< response status */
     uint8_t data[CTAP_MAX_MSG_SIZE];    /**< response data */
+    size_t length;
 } ctap_resp_t;
 
 /**
