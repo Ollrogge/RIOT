@@ -50,6 +50,10 @@ void _set_state(fido_lora_state_t state)
 
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui)
 {
+    if (_state.state == FIDO_LORA_GA_FINISH) {
+        return 0;
+    }
+
     uint8_t rp_id_hash[SHA256_DIGEST_LENGTH] = {0};
     sha256(rp_id, strlen(rp_id), rp_id_hash);
     ctap_resident_key_t key;
@@ -74,20 +78,21 @@ int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui)
     uint8_t* appkey = &new_keys[0];
     uint8_t* nwkkey = &new_keys[LORAMAC_APPKEY_LEN];
 
+    memcpy(mac->ctx.appskey, appkey, LORAMAC_APPKEY_LEN);
+    memcpy(mac->ctx.nwksenckey, nwkkey, LORAMAC_NWKKEY_LEN);
+
     gnrc_lorawan_generate_lifetime_session_keys(deveui, nwkkey,
                                                     gnrc_lorawan_get_jsintkey(mac),
                                                     gnrc_lorawan_get_jsenckey(mac));
 
-    // use new appkey
-    memcpy(mac->ctx.appskey, appkey, LORAMAC_APPKEY_LEN);
-    memcpy(mac->ctx.nwksenckey, nwkkey, LORAMAC_NWKKEY_LEN);
-
     DEBUG("root key derivation done \n");
+    DEBUG("Appkey: ");
     for (unsigned i = 0; i < LORAMAC_APPKEY_LEN; i++) {
         DEBUG("%02x", mac->ctx.appskey[i]);
     }
     DEBUG("\n");
 
+    DEBUG("Nwkkey: ");
     for (unsigned i = 0; i < LORAMAC_APPKEY_LEN; i++) {
         DEBUG("%02x", mac->ctx.nwksenckey[i]);
     }

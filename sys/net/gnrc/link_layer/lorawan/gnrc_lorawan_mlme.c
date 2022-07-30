@@ -41,9 +41,6 @@ static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
     lorawan_hdr_set_maj((lorawan_hdr_t *)hdr, MAJOR_LRWAN_R1);
 
     if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
-        int ret = gnrc_lorawan_fido_derive_root_keys(mac, deveui);
-        //todo: what to do if this fails ?
-        (void)ret;
         mac->mcps.msdu = gnrc_lorawan_fido_join_req();
     }
     else {
@@ -364,6 +361,15 @@ void gnrc_lorawan_mlme_request(gnrc_lorawan_t *mac,
         }
 
         memcpy(mac->ctx.nwksenckey, mlme_request->join.nwkkey, LORAMAC_NWKKEY_LEN);
+        if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN) &&
+            gnrc_lorawan_fido_get_state() == FIDO_LORA_GA_BEGIN) {
+            int ret = gnrc_lorawan_fido_derive_root_keys(mac, mlme_request->join.deveui);
+            //todo: what to do if this fails ?
+            (void)ret;
+
+            memcpy(mlme_request->join.appkey, mac->ctx.appskey, LORAMAC_APPKEY_LEN);
+            memcpy(mlme_request->join.nwkkey, mac->ctx.nwksenckey, LORAMAC_NWKKEY_LEN);
+        }
         mlme_confirm->status = gnrc_lorawan_send_join_request(mac,
                                                               mlme_request->join.deveui,
                                                               mlme_request->join.joineui,
