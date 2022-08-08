@@ -172,7 +172,7 @@ bool fido2_ctap_mem_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash, unsign
     unsigned seen = 0x0;
     unsigned off = 0x0;
     bool found = false;
-    uint32_t latest = 0x0;
+    int64_t latest = -1;
     ctap_resident_key_t tmp = {0};
 
     for (size_t i = 0; i < max; i++) {
@@ -180,12 +180,14 @@ bool fido2_ctap_mem_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash, unsign
 
         if (ret < 0) {
             DEBUG("read failed \n");
+            return false;
         }
 
         if (memcmp(tmp.rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0x0) {
-            if (key->creation_time > latest) {
+            int64_t id = (int64_t)tmp.id;
+            if (id > latest) {
                 memcpy(key, &tmp, sizeof(ctap_resident_key_t));
-                latest = key->creation_time;
+                latest = id;
             }
 
             found = true;

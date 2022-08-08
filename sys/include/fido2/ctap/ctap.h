@@ -407,6 +407,7 @@ typedef struct {
     uint8_t cred_key[CTAP_CRED_KEY_LEN];        /**< AES CCM encryption key for cred */
     bool cred_key_is_initialized;               /**< AES CCM key initialized flag */
     bool pin_is_set;                            /**< PIN is set or not */
+    uint32_t id_cnt;                            /**< id counter for internal id */
 } ctap_state_t;
 
 /**
@@ -485,6 +486,7 @@ struct __attribute__((packed)) ctap_resident_key {
     uint8_t user_id[CTAP_USER_ID_MAX_SIZE];     /**< id of user */
     uint8_t user_id_len;                        /**< length of the user id */
     uint8_t priv_key[CTAP_CRYPTO_KEY_SIZE];     /**< private key */
+    uint32_t id;                                /**< internal id to find most recent key */
     uint32_t sign_count;                        /**< signature counter.
                                                    See webauthn specification
                                                    (version 20190304) section 6.1.1

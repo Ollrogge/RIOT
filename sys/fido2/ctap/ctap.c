@@ -263,6 +263,10 @@ static uint8_t _pin_token[CTAP_PIN_TOKEN_SZ];
  */
 static int _rem_pin_att_boot = CTAP_PIN_MAX_ATTS_BOOT;
 
+static uint32_t get_id(void) {
+    return _state.id_cnt++;
+}
+
 int fido2_ctap_init(void)
 {
     int ret;
@@ -442,6 +446,8 @@ static int _reset(void)
     _state.config.options |= CTAP_INFO_OPTIONS_FLAG_CLIENT_PIN;
     _state.config.options |= CTAP_INFO_OPTIONS_FLAG_UP;
 
+    _state.id_cnt = 0x0;
+
     uint8_t aaguid[CTAP_AAGUID_SIZE];
 
     fmt_hex_bytes(aaguid, CTAP_AAGUID);
@@ -580,6 +586,7 @@ static int _make_credential(ctap_req_t *req_raw)
 
     /* if created credential is a resident credential, save it to flash */
     if (rk) {
+        k.id = get_id();
         ret = _write_rk_to_flash(&k);
         if (ret != CTAP2_OK) {
             goto done;
