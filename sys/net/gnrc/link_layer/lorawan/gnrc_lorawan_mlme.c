@@ -41,6 +41,7 @@ static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
     lorawan_hdr_set_maj((lorawan_hdr_t *)hdr, MAJOR_LRWAN_R1);
 
     if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
+        memcpy(mac->deveui, deveui, LORAMAC_DEVEUI_LEN);
         mac->mcps.msdu = gnrc_lorawan_fido_join_req();
     }
     else {
@@ -170,7 +171,7 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
     }
 
     /* Subtract 1 from join accept max size, since the MHDR was already read */
-    uint8_t out[GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - 1 + 0x40];
+    uint8_t out[GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - 1 + 0x100];
     uint8_t has_cflist = (size - 1) > CFLIST_SIZE;
 
     if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
@@ -210,7 +211,9 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
         // for now assume it is always set
         off += 0x10;
 
-        int ret = gnrc_lorawan_fido_join_accpt(data + off, size - off - MIC_SIZE);
+        uint8_t fido_data_len = data[off];
+
+        int ret = gnrc_lorawan_fido_join_accpt(&data[off + 0x1], (size_t)fido_data_len);
         if (ret < 0) {
             DEBUG("gnrc_lorawan_mlme: FIDO failed.\n");
             status = -EBADMSG;
@@ -219,11 +222,16 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
 
         // fail for now because we aren't done
         status = -EBADMSG;
-        DEBUG("GA_BEGIN finished. 'ifconfig 3 up' to start phase 2. \n");
+
+        gnrc_lorawan_send_join_request(mac, mac->deveui, mac->joineui,
+        mac->ctx.nwksenckey, mac->last_dr);
+        DEBUG("GA_BEGIN finished. Starting GA_FINISH phase. \n");
     }
     // do normal stuff when fido authentication flow is done
     else if (!IS_ACTIVE(CONFIG_FIDO2_LORAWAN) ||
         gnrc_lorawan_fido_get_state() == FIDO_LORA_GA_FINISH) {
+            gnrc_lorawan_reset_state();
+
             void *joineui = IS_USED(MODULE_GNRC_LORAWAN_1_1) ? mac->joineui : NULL;
 
             gnrc_lorawan_generate_session_keys(ja_hdr->join_nonce,
@@ -361,8 +369,7 @@ void gnrc_lorawan_mlme_request(gnrc_lorawan_t *mac,
         }
 
         memcpy(mac->ctx.nwksenckey, mlme_request->join.nwkkey, LORAMAC_NWKKEY_LEN);
-        if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN) &&
-            gnrc_lorawan_fido_get_state() == FIDO_LORA_GA_BEGIN) {
+        if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
             int ret = gnrc_lorawan_fido_derive_root_keys(mac, mlme_request->join.deveui);
             //todo: what to do if this fails ?
             (void)ret;

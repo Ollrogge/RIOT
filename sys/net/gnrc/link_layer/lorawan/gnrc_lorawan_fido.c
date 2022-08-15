@@ -50,10 +50,6 @@ void _set_state(fido_lora_state_t state)
 
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui)
 {
-    if (_state.state == FIDO_LORA_GA_FINISH) {
-        return 0;
-    }
-
     uint8_t rp_id_hash[SHA256_DIGEST_LENGTH] = {0};
     sha256(rp_id, strlen(rp_id), rp_id_hash);
     ctap_resident_key_t key;
@@ -135,7 +131,6 @@ iolist_t *gnrc_lorawan_fido_join_req(void)
     }
     else {
         DEBUG("gnrc_lorawan_fido_join_req: GA_FINISH \n");
-        resp->status = FIDO_LORA_GA_FINISH;
 
         if (resp->status == CTAP2_OK && resp->length > 0x0) {
             _data.iol_next = NULL;
@@ -146,15 +141,17 @@ iolist_t *gnrc_lorawan_fido_join_req(void)
         else {
             _data.iol_next = NULL;
             _data.iol_base = resp;
-            // status code + data
-            _data.iol_len = 0x1 + resp->length;
+            // status code only
+            _data.iol_len = 0x1;
         }
+
+        resp->status = FIDO_LORA_GA_FINISH;
 
         /**
          * go back to initial state. Don't wait for server response due to
          * timeouts etc.
          */
-        _set_state(FIDO_LORA_GA_BEGIN);
+        //_set_state(FIDO_LORA_GA_BEGIN);
     }
 
     return &_data;
@@ -162,22 +159,9 @@ iolist_t *gnrc_lorawan_fido_join_req(void)
 
 int gnrc_lorawan_fido_join_accpt(uint8_t* data, size_t length)
 {
-    uint8_t type = data[0];
-
-    data = data + 0x1;
-    length -= 0x1;
-
-    DEBUG("lora fido join accpt: %u \n", (unsigned)length);
-
-    switch (type) {
-        case FIDO_LORA_GA_BEGIN:
-            _state.req.buf = data;
-            _state.req.len = length;
-            _state.req.method = CTAP_GET_ASSERTION;
-            break;
-        default:
-            break;
-    }
+    _state.req.buf = data;
+    _state.req.len = length;
+    _state.req.method = CTAP_GET_ASSERTION;
 
     event_queue_t *queue = fido2_ctap_transport_get_event_queue();
 
@@ -191,7 +175,7 @@ int gnrc_lorawan_fido_join_accpt(uint8_t* data, size_t length)
     cond_wait(&_cond, &_lock);
     mutex_unlock(&_lock);
 
-    DEBUG("lora thread back \n");
+    //DEBUG("lora thread back \n");
 
     if (_state.resp.status != CTAP2_OK) {
         _set_state(FIDO_LORA_GA_BEGIN);
@@ -206,11 +190,16 @@ static void _join_accpt(event_t *arg)
 {
     (void)arg;
 
-    size_t l = fido2_ctap_handle_request(&_state.req, &_state.resp);
+    size_t len = fido2_ctap_handle_request(&_state.req, &_state.resp);
 
-    _state.resp.length = l;
+    _state.resp.length = len;
 
     cond_signal(&_cond);
 
     DEBUG("fido2 resp: %u \n", _state.resp.status);
+}
+
+void gnrc_lorawan_reset_state(void)
+{
+    _set_state(FIDO_LORA_GA_BEGIN);
 }
