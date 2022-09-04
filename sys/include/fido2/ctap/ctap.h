@@ -486,6 +486,9 @@ struct __attribute__((packed)) ctap_resident_key {
     uint8_t user_id[CTAP_USER_ID_MAX_SIZE];     /**< id of user */
     uint8_t user_id_len;                        /**< length of the user id */
     uint8_t priv_key[CTAP_CRYPTO_KEY_SIZE];     /**< private key */
+#ifdef CONFIG_FIDO2_LORAWAN_SAVE_PUB_KEY
+     ctap_crypto_pub_key_t pub_key;
+#endif
     uint32_t id;                                /**< internal id to find most recent key */
     uint32_t sign_count;                        /**< signature counter.
                                                    See webauthn specification
@@ -671,6 +674,8 @@ int fido2_ctap_encrypt_rk(ctap_resident_key_t *rk, uint8_t *nonce,
 bool fido2_ctap_pin_is_set(void);
 
 bool fido2_ctap_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash);
+
+ctap_crypto_pub_key_t *fido2_ctap_get_rk_pub_key(ctap_resident_key_t *key);
 
 #ifdef __cplusplus
 }

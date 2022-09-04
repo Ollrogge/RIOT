@@ -235,6 +235,8 @@ static inline bool _is_boot_locked(void);
  */
 static inline bool _is_locked(void);
 
+static void _set_rk_pub_key(ctap_resident_key_t *rk, ctap_crypto_pub_key_t *pub_key);
+
 /**
  * @brief State of authenticator
  */
@@ -1675,6 +1677,10 @@ static int _make_auth_data_attest(ctap_make_credential_req_t *req,
         return ret;
     }
 
+    if (IS_USED(CONFIG_FIDO2_LORAWAN_SAVE_PUB_KEY)) {
+        _set_rk_pub_key(k, &cred_data->key.pubkey);
+    }
+
     cred_data->key.alg_type = req->alg_type;
     cred_data->key.cred_type = req->cred_type;
     cred_data->key.crv = CTAP_COSE_KEY_CRV_P256;
@@ -1724,6 +1730,25 @@ static int _make_auth_data_attest(ctap_make_credential_req_t *req,
     }
 
     return CTAP2_OK;
+}
+
+static void _set_rk_pub_key(ctap_resident_key_t *rk, ctap_crypto_pub_key_t *pub_key)
+{
+#ifdef CONFIG_FIDO2_LORAWAN_SAVE_PUB_KEY
+    memcpy(&rk->pub_key, pub_key, sizeof(ctap_crypto_pub_key_t));
+#else
+    (void) rk;
+    (void) pub_key;
+#endif
+}
+
+ctap_crypto_pub_key_t *fido2_ctap_get_rk_pub_key(ctap_resident_key_t *key)
+{
+#ifdef CONFIG_FIDO2_LORAWAN_SAVE_PUB_KEY
+    return &key->pub_key;
+#else
+    return NULL;
+#endif
 }
 
 int fido2_ctap_encrypt_rk(ctap_resident_key_t *rk, uint8_t *nonce,

@@ -24,6 +24,8 @@
 #include "errno.h"
 #include "net/gnrc/pktbuf.h"
 #include "random.h"
+#include "ztimer.h"
+
 
 #include "net/lorawan/hdr.h"
 
@@ -155,6 +157,8 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
 void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
                                     size_t size)
 {
+    uint32_t start = ztimer_now(ZTIMER_MSEC);
+
     int status = -EBADMSG;
     mlme_confirm_t mlme_confirm;
 
@@ -269,6 +273,10 @@ out:
 
     gnrc_lorawan_mac_release(mac);
     gnrc_lorawan_mlme_confirm(mac, &mlme_confirm);
+
+    uint32_t end = ztimer_now(ZTIMER_MSEC);
+
+    DEBUG("Join processing took: %lu \n", end - start);
 }
 
 void gnrc_lorawan_mlme_backoff_expire_cb(gnrc_lorawan_t *mac)
@@ -368,6 +376,7 @@ void gnrc_lorawan_mlme_request(gnrc_lorawan_t *mac,
                        &mlme_request->join), LORAMAC_APPKEY_LEN);
         }
 
+        uint32_t start = ztimer_now(ZTIMER_MSEC);
         memcpy(mac->ctx.nwksenckey, mlme_request->join.nwkkey, LORAMAC_NWKKEY_LEN);
         if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
             int ret = gnrc_lorawan_fido_derive_root_keys(mac, mlme_request->join.deveui);
@@ -382,6 +391,9 @@ void gnrc_lorawan_mlme_request(gnrc_lorawan_t *mac,
                                                               mlme_request->join.joineui,
                                                               mlme_request->join.nwkkey,
                                                               mlme_request->join.dr);
+
+        uint32_t end = ztimer_now(ZTIMER_MSEC);
+        DEBUG("Join req send processing took: %lu \n ", end - start);
         break;
     case MLME_LINK_CHECK:
         mac->mlme.pending_mlme_opts |=
