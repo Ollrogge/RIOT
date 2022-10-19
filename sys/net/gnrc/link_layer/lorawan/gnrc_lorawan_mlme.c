@@ -25,8 +25,6 @@
 #include "net/gnrc/pktbuf.h"
 #include "random.h"
 #include "ztimer.h"
-
-
 #include "net/lorawan/hdr.h"
 
 #define ENABLE_DEBUG 1

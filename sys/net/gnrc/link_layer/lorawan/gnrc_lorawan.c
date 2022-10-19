@@ -291,8 +291,16 @@ void gnrc_lorawan_send_pkt(gnrc_lorawan_t *mac, iolist_t *psdu, uint8_t dr,
 
     DEBUG("Time on air: %lu \n", mac->toa /1000);
 
-    if (dev->driver->send(dev, psdu) == -ENOTSUP) {
-        DEBUG("gnrc_lorawan: Cannot send: radio is still transmitting");
+    if (IS_USED(CONFIG_LORAWAN_OVER_USB)) {
+        DEBUG("Sending lorawan data over USB \n");
+        gnrc_lorawan_usb_init(mac);
+        gnrc_lorawan_usb_send(psdu);
+        DEBUG("Send done \n");
+    }
+    else {
+        if (dev->driver->send(dev, psdu) == -ENOTSUP) {
+            DEBUG("gnrc_lorawan: Cannot send: radio is still transmitting");
+        }
     }
 }
 

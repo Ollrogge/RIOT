@@ -13,7 +13,7 @@ USEMODULE += netdev_default
 USEMODULE += auto_init_gnrc_netif
 
 # Add support for GNRC LoRaWAN
-#USEMODULE += gnrc_lorawan
+USEMODULE += gnrc_lorawan
 # Add support for GNRC LoRaWAN 1.1
 # USEMODULE += gnrc_lorawan_1_1
 

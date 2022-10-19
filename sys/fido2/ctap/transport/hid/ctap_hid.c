@@ -35,7 +35,7 @@
  *
  * CTAP specification (version 20190130) section 8.1.8.2
  */
-const uint8_t _hid_report_desc[] = {
+static const uint8_t _hid_report_desc[] = {
     USB_HID_USAGE_PAGE16(USB_HID_USAGE_FIDO),
     USB_HID_USAGE(USB_HID_USAGE_FIDO_U2F_AUTHENTICATOR_DEVICE),
     USB_HID_COLLECTION(USB_HID_COLLECTION_APPLICATION),

@@ -243,6 +243,9 @@ typedef struct {
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
     bool optneg;                                    /**< optneg bit */
 #endif
+#if IS_ACTIVE(CONFIG_LORAWAN_OVER_USB)
+    bool usb_is_initialized;
+#endif
     uint8_t deveui[LORAMAC_DEVEUI_LEN];
     uint32_t channel[GNRC_LORAWAN_MAX_CHANNELS];    /**< channel array */
     uint16_t channel_mask;                          /**< channel mask */
@@ -275,6 +278,10 @@ fido_lora_state_t gnrc_lorawan_fido_get_state(void);
 iolist_t *gnrc_lorawan_fido_join_req(void);
 int gnrc_lorawan_fido_join_accpt(uint8_t* data, size_t size);
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui);
+
+void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac);
+void gnrc_lorawan_usb_send(iolist_t *iolist);
+
 void gnrc_lorawan_reset_state(void);
 /**
  * @brief Encrypts LoRaWAN payload
