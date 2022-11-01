@@ -275,6 +275,14 @@ void gnrc_lorawan_radio_rx_timeout_cb(gnrc_lorawan_t *mac)
 void gnrc_lorawan_send_pkt(gnrc_lorawan_t *mac, iolist_t *psdu, uint8_t dr,
                            uint32_t chan)
 {
+    if (IS_USED(CONFIG_LORAWAN_OVER_USB)) {
+        DEBUG("Sending lorawan data over USB \n");
+        gnrc_lorawan_usb_init(mac);
+        gnrc_lorawan_usb_send(psdu);
+        DEBUG("Send done \n");
+        return;
+    }
+
     netdev_t *dev = gnrc_lorawan_get_netdev(mac);
 
     mac->state = LORAWAN_STATE_TX;
@@ -291,17 +299,10 @@ void gnrc_lorawan_send_pkt(gnrc_lorawan_t *mac, iolist_t *psdu, uint8_t dr,
 
     DEBUG("Time on air: %lu \n", mac->toa /1000);
 
-    if (IS_USED(CONFIG_LORAWAN_OVER_USB)) {
-        DEBUG("Sending lorawan data over USB \n");
-        gnrc_lorawan_usb_init(mac);
-        gnrc_lorawan_usb_send(psdu);
-        DEBUG("Send done \n");
+    if (dev->driver->send(dev, psdu) == -ENOTSUP) {
+        DEBUG("gnrc_lorawan: Cannot send: radio is still transmitting");
     }
-    else {
-        if (dev->driver->send(dev, psdu) == -ENOTSUP) {
-            DEBUG("gnrc_lorawan: Cannot send: radio is still transmitting");
-        }
-    }
+
 }
 
 void gnrc_lorawan_radio_rx_done_cb(gnrc_lorawan_t *mac, uint8_t *psdu,
