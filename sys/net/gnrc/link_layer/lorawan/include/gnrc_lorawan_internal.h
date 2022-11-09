@@ -280,7 +280,7 @@ int gnrc_lorawan_fido_join_accpt(uint8_t* data, size_t size);
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui);
 
 void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac);
-void gnrc_lorawan_usb_send(iolist_t *iolist);
+void gnrc_lorawan_usb_send(gnrc_lorawan_t *mac, iolist_t *iolist);
 
 void gnrc_lorawan_reset_state(void);
 /**

@@ -158,7 +158,7 @@ static inline bool _is_init_type_pkt(const ctap_hid_pkt_t *pkt);
 /**
  * @brief USB stack
  */
-static char _usb_stack[USBUS_STACKSIZE];
+static char _usb_stack[USBUS_STACKSIZE*4];
 
 /**
  * @brief USBUS context

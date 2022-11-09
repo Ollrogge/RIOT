@@ -49,6 +49,14 @@ void _set_state(fido_lora_state_t state)
     _state.state = state;
 }
 
+static void print_hex(void* buf, size_t len) {
+    uint8_t* _buf = (uint8_t*)buf;
+    for (size_t i = 0; i < len; i++) {
+        DEBUG("%02x", _buf[i]);
+    }
+    DEBUG("\n");
+}
+
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t *deveui)
 {
     uint32_t start = ztimer_now(ZTIMER_MSEC);
@@ -95,18 +103,9 @@ int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t *deveui)
 
     DEBUG("root key derivation done \n");
     DEBUG("Appkey: ");
-    for (unsigned i = 0; i < LORAMAC_APPKEY_LEN; i++)
-    {
-        DEBUG("%02x", mac->ctx.appskey[i]);
-    }
-    DEBUG("\n");
-
+    print_hex(mac->ctx.appskey, LORAMAC_APPKEY_LEN);
     DEBUG("Nwkkey: ");
-    for (unsigned i = 0; i < LORAMAC_APPKEY_LEN; i++)
-    {
-        DEBUG("%02x", mac->ctx.nwksenckey[i]);
-    }
-    DEBUG("\n");
+    print_hex(mac->ctx.nwksenckey, LORAMAC_APPKEY_LEN);
 
     /*
 
@@ -148,6 +147,7 @@ iolist_t *gnrc_lorawan_fido_join_req(void)
         if (IS_USED(CONFIG_FIDO2_LORAWAN_SAVE_PUB_KEY))
         {
             DEBUG("Sending public key in FIDO_LORA_GA_BEGIN \n");
+            print_hex(fido2_ctap_get_rk_pub_key(&_state.key), sizeof(ctap_crypto_pub_key_t));
             memcpy(resp->data, fido2_ctap_get_rk_pub_key(&_state.key), sizeof(ctap_crypto_pub_key_t));
             _data.iol_len += sizeof(ctap_crypto_pub_key_t);
         }

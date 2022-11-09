@@ -4,22 +4,28 @@
 #include "usb/usbus/hid_io.h"
 #endif
 #include "net/gnrc/lorawan.h"
+#include "xtimer.h"
+#include "cond.h"
+#include "event.h"
 
 #define ENABLE_DEBUG 1
 #include "debug.h"
 
+static cond_t _cond = COND_INIT;
+static mutex_t _lock = MUTEX_INIT;
+uint8_t recv_buf[0x100];
+unsigned recv_off;
 static void _usb_cb(void* arg)
 {
-    (void)arg;
-    // todo: size is guessed
-    uint8_t buffer[0x100] = {0};
-    int total_cnt = 0x0;
+    gnrc_lorawan_t *mac = (gnrc_lorawan_t*)arg;
     int cnt = 0x0;
 
-    do {
-        cnt = usb_hid_io_read(buffer, CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
-        total_cnt += cnt;
-    } while(cnt == CONFIG_USBUS_HID_INTERRUPT_EP_SIZE && total_cnt != sizeof(buffer));
+    cnt = usb_hid_io_read(&recv_buf[recv_off], CONFIG_USBUS_HID_INTERRUPT_EP_SIZE);
+    recv_off += cnt;
+
+    if (cnt < CONFIG_USBUS_HID_INTERRUPT_EP_SIZE)  {
+        cond_signal(&_cond);
+    }
 }
 
 void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac)
@@ -30,12 +36,12 @@ void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac)
         return;
     }
 
-    usb_hid_io_set_rx_cb(_usb_cb, NULL);
+    usb_hid_io_set_rx_cb(_usb_cb, mac);
     mac->usb_is_initialized = true;
 #endif
 }
 
-void gnrc_lorawan_usb_send(iolist_t *iolist)
+void gnrc_lorawan_usb_send(gnrc_lorawan_t *mac, iolist_t *iolist)
 {
     (void) iolist;
 #if IS_ACTIVE(CONFIG_LORAWAN_OVER_USB)
@@ -45,5 +51,12 @@ void gnrc_lorawan_usb_send(iolist_t *iolist)
            usb_hid_io_write(iol->iol_base, iol->iol_len);
        }
     }
+
+    mutex_lock(&_lock);
+    cond_wait(&_cond, &_lock);
+    mutex_unlock(&_lock);
+    unsigned tmp = recv_off;
+    recv_off = 0x0;
+    gnrc_lorawan_mlme_process_join(mac, recv_buf, tmp);
 #endif
 }

@@ -90,9 +90,16 @@ void gnrc_lorawan_trigger_join(gnrc_lorawan_t *mac)
         pkt.iol_next = NULL;
     }
 
-    mac->last_chan_idx = gnrc_lorawan_pick_channel(mac);
-    gnrc_lorawan_send_pkt(mac, &pkt, mac->last_dr,
+    if (IS_USED(CONFIG_LORAWAN_OVER_USB)) {
+        DEBUG("Sending lorawan data over USB: %u \n", (unsigned)iolist_size(&pkt));
+        gnrc_lorawan_usb_init(mac);
+        gnrc_lorawan_usb_send(mac, &pkt);
+    }
+    else {
+        mac->last_chan_idx = gnrc_lorawan_pick_channel(mac);
+        gnrc_lorawan_send_pkt(mac, &pkt, mac->last_dr,
                           mac->channel[mac->last_chan_idx]);
+    }
 }
 
 static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
@@ -145,11 +152,17 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
 
     /* We need a random delay for join request. Otherwise there might be
      * network congestion if a group of nodes start at the same time */
-    gnrc_lorawan_set_timer(mac, random_uint32() & GNRC_LORAWAN_JOIN_DELAY_U32_MASK);
+    if (IS_USED(CONFIG_LORAWAN_OVER_USB)) {
+        gnrc_lorawan_trigger_join(mac);
+        return GNRC_LORAWAN_REQ_STATUS_SUCCESS;
+    }
+    else {
+        gnrc_lorawan_set_timer(mac, random_uint32() & GNRC_LORAWAN_JOIN_DELAY_U32_MASK);
+        mac->mlme.backoff_budget -= mac->toa;
 
-    mac->mlme.backoff_budget -= mac->toa;
+        return GNRC_LORAWAN_REQ_STATUS_DEFERRED;
+    }
 
-    return GNRC_LORAWAN_REQ_STATUS_DEFERRED;
 }
 
 void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,

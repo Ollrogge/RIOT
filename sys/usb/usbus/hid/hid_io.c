@@ -26,7 +26,7 @@
 #include "usb/usbus/hid.h"
 #include "usb/usbus/hid_io.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 static usbus_hid_device_t hid;
@@ -57,13 +57,13 @@ void usb_hid_io_write(const void *buffer, size_t len)
     while (len) {
         mutex_lock(&hid.in_lock);
         if (len > max_size) {
-            memmove(buffer_ep + offset, (uint8_t *)buffer + offset, max_size);
+            memmove(buffer_ep, (uint8_t *)buffer + offset, max_size);
             offset += max_size;
             hid.occupied = max_size;
             len -= max_size;
         }
         else {
-            memmove(buffer_ep + offset, (uint8_t *)buffer + offset, len);
+            memmove(buffer_ep, (uint8_t *)buffer + offset, len);
             offset += len;
             hid.occupied = len;
             len = 0;
