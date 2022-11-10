@@ -64,7 +64,6 @@ void usb_hid_io_write(const void *buffer, size_t len)
         }
         else {
             memmove(buffer_ep, (uint8_t *)buffer + offset, len);
-            offset += len;
             hid.occupied = len;
             len = 0;
         }
