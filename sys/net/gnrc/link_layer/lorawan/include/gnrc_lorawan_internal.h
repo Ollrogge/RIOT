@@ -275,7 +275,7 @@ typedef enum {
 } fido_lora_state_t;
 
 fido_lora_state_t gnrc_lorawan_fido_get_state(void);
-iolist_t *gnrc_lorawan_fido_join_req(void);
+iolist_t *gnrc_lorawan_fido_join_req(gnrc_lorawan_t* mac);
 int gnrc_lorawan_fido_join_accpt(uint8_t* data, size_t size);
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t* deveui);
 

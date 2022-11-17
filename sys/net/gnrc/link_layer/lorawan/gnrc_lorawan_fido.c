@@ -132,7 +132,7 @@ fido_lora_state_t gnrc_lorawan_fido_get_state(void)
     return _state.state;
 }
 
-iolist_t *gnrc_lorawan_fido_join_req(void)
+iolist_t *gnrc_lorawan_fido_join_req(gnrc_lorawan_t* mac)
 {
     ctap_resp_t *resp = &_state.resp;
     if (_state.state == FIDO_LORA_GA_BEGIN)
@@ -154,7 +154,14 @@ iolist_t *gnrc_lorawan_fido_join_req(void)
     }
     else
     {
-        DEBUG("gnrc_lorawan_fido_join_req: GA_FINISH \n");
+        DEBUG("gnrc_lorawan_fido_join_req: GA_FINISH: \n");
+
+        ctap_resp_t tmp = {0};
+        memcpy(tmp.data, resp->data, resp->length);
+
+        // encrypt assertion object
+        gnrc_lorawan_fido_decrypt_join_accept(mac->ctx.nwksenckey,
+                              tmp.data, tmp.length, resp->data);
 
         if (resp->status == CTAP2_OK && resp->length > 0x0)
         {
@@ -199,6 +206,7 @@ int gnrc_lorawan_fido_join_accpt(uint8_t *data, size_t length)
      */
     event_post(queue, &_join_accpt_event);
 
+    DEBUG("waiting \n");
     mutex_lock(&_lock);
     cond_wait(&_cond, &_lock);
     mutex_unlock(&_lock);
@@ -226,6 +234,7 @@ static void _join_accpt(event_t *arg)
 
     _state.resp.length = len;
 
+    DEBUG("Signaling \n");
     cond_signal(&_cond);
 
     DEBUG("fido2 resp: %u \n", _state.resp.status);

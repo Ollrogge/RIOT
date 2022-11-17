@@ -42,7 +42,7 @@ static void _build_join_req_pkt(gnrc_lorawan_t *mac, uint8_t *joineui,
 
     if (IS_ACTIVE(CONFIG_FIDO2_LORAWAN)) {
         memcpy(mac->deveui, deveui, LORAMAC_DEVEUI_LEN);
-        mac->mcps.msdu = gnrc_lorawan_fido_join_req();
+        mac->mcps.msdu = gnrc_lorawan_fido_join_req(mac);
     }
     else {
         mac->mcps.msdu = NULL;
@@ -98,7 +98,7 @@ void gnrc_lorawan_trigger_join(gnrc_lorawan_t *mac)
     else {
         mac->last_chan_idx = gnrc_lorawan_pick_channel(mac);
         gnrc_lorawan_send_pkt(mac, &pkt, mac->last_dr,
-                          mac->channel[mac->last_chan_idx]);
+                mac->channel[mac->last_chan_idx]);
     }
 }
 
@@ -162,7 +162,6 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
 
         return GNRC_LORAWAN_REQ_STATUS_DEFERRED;
     }
-
 }
 
 void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
