@@ -8,6 +8,7 @@
 #include "event.h"
 #include "fmt.h"
 #include "gnrc_lorawan_internal.h"
+#include "crypto/aes.h"
 
 #include "fido2/ctap/ctap_crypto.h"
 
@@ -100,8 +101,6 @@ int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t *deveui)
     uint32_t end = ztimer_now(ZTIMER_MSEC);
 
     DEBUG("Root key derivation took: %lu \n", end - start);
-
-    DEBUG("root key derivation done \n");
     DEBUG("Appkey: ");
     print_hex(mac->ctx.appskey, LORAMAC_APPKEY_LEN);
     DEBUG("Nwkkey: ");
@@ -157,11 +156,17 @@ iolist_t *gnrc_lorawan_fido_join_req(gnrc_lorawan_t* mac)
         DEBUG("gnrc_lorawan_fido_join_req: GA_FINISH: \n");
 
         ctap_resp_t tmp = {0};
-        memcpy(tmp.data, resp->data, resp->length);
+        tmp.length = resp->length % AES_BLOCK_SIZE == 0 ? resp->length : \
+                    resp->length + AES_BLOCK_SIZE - resp->length % AES_BLOCK_SIZE;
 
+        memcpy(tmp.data, resp->data, tmp.length);
+
+        DEBUG("Encrypting assertion object: %u \n ", (unsigned)tmp.length);
         // encrypt assertion object
         gnrc_lorawan_fido_decrypt_join_accept(mac->ctx.nwksenckey,
                               tmp.data, tmp.length, resp->data);
+
+        resp->length = tmp.length;
 
         if (resp->status == CTAP2_OK && resp->length > 0x0)
         {

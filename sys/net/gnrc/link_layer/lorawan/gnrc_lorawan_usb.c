@@ -53,7 +53,7 @@ void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac)
         return;
     }
 
-    thread_create(_worker_stack, sizeof(_worker_stack), THREAD_PRIORITY_MAIN-2, 0, worker, mac, "lorawan_usb_worker");
+    thread_create(_worker_stack, sizeof(_worker_stack), THREAD_PRIORITY_MAIN - 5, 0, worker, mac, "lorawan_usb_worker");
 
     usb_hid_io_set_rx_cb(_usb_cb, NULL);
     mac->usb_is_initialized = true;
