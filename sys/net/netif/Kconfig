@@ -4,6 +4,11 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 #
+menuconfig MODULE_NETIF
+    bool "Module netif"
+    help
+        Configure module netif.
+
 menuconfig KCONFIG_USEMODULE_NETIF
     bool "Configure Network Interfaces"
     depends on USEMODULE_NETIF

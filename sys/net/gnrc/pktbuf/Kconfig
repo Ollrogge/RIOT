@@ -4,6 +4,9 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 #
+menuconfig MODULE_GNRC_PKTBUF
+    bool "gnrc_pktbuf"
+
 menuconfig KCONFIG_USEMODULE_GNRC_PKTBUF_STATIC
     bool "Configure the GNRC Packet Buffer"
     depends on USEMODULE_GNRC_PKTBUF_STATIC

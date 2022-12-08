@@ -4,6 +4,14 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 #
+
+menuconfig MODULE_GNRC_PKTDUMP
+    bool "Configure GNRC Packet Dump"
+    select MODULE_GNRC_PKTBUF_STATIC
+    select MODULE_OD
+    help
+        Configure the GNRC_PKTDUMP using Kconfig.
+
 menuconfig KCONFIG_USEMODULE_GNRC_PKTDUMP
     bool "Configure GNRC Packet Dump"
     depends on USEMODULE_GNRC_PKTDUMP

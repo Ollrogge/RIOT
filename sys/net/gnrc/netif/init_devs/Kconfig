@@ -1,0 +1,6 @@
+config MODULE_AUTO_INIT_GNRC_NETIF
+    bool "auto init"
+    select MODULE_GNRC_NETIF_INIT_DEVS
+
+config MODULE_GNRC_NETIF_INIT_DEVS
+    bool "auto init gnrc netif"

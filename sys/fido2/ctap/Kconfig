@@ -82,6 +82,13 @@ config FIDO2_CTAP_SE_ENC_CREDS
     depends on PSA_SECURE_ELEMENT
     bool "Use aes based on key stored in SE to encrypt credentials"
 
+config ERROR_MODULES_CONFLICT
+    string
+    default "FIDO2_CTAP_SE_CREDS and FIDO2_CTAP_SE_ENC_CREDS cant be active at the same time." if FIDO2_CTAP_SE_ENC_CREDS && FIDO2_CTAP_SE_CREDS
+    help
+        Used to indicate that conflicting modules (i.e. modules that can't be
+        active at the same time) are being used together.
+
 choice
     bool "User presence button mode"
     depends on !FIDO2_CTAP_DISABLE_UP

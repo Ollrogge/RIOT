@@ -1,0 +1,3 @@
+menuconfig MODULE_GNRC_PKTBUF_STATIC
+    bool "gnrc_pktbuf"
+    select MODULE_GNRC_PKTBUF

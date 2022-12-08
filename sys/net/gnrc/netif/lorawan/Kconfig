@@ -1,0 +1,2 @@
+menuconfig MODULE_GNRC_NETIF_LORAWAN
+    bool "gnrc netif lorawan"

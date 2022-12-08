@@ -305,3 +305,7 @@ config MODULE_SHELL_CMD_VFS
     depends on MODULE_SHELL_CMDS
     depends on MODULE_VFS
     select MODULE_TINY_STRERROR
+
+config MODULE_SHELL_CMD_TXTSND
+    bool "gnrc txtsnd"
+    select MODULE_GNRC_TXTSND

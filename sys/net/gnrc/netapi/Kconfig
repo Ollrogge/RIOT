@@ -1,0 +1,2 @@
+menuconfig MODULE_GNRC_NETAPI
+    bool "gnrc netapi"
