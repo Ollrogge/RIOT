@@ -62,9 +62,28 @@ extern "C" {
 /**
  * @brief Resident key size with alignment padding
  */
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
+#define CTAP_AES_ALIGN_PAD(x) (sizeof(x) % PSA_BLOCK_CIPHER_BLOCK_LENGTH(PSA_KEY_TYPE_AES) == \
+                                 0 ? \
+                                 0 : PSA_BLOCK_CIPHER_BLOCK_LENGTH(PSA_KEY_TYPE_AES) - \
+                                 sizeof(x) % PSA_BLOCK_CIPHER_BLOCK_LENGTH(PSA_KEY_TYPE_AES))
+
+#define CTAP_AES_BLOCK_ALIGNED_SZ(x) (sizeof(x) + CTAP_AES_ALIGN_PAD(x))
+
+#define CTAP_AES_ENC_SZ(x) (PSA_CIPHER_ENCRYPT_OUTPUT_SIZE(PSA_KEY_TYPE_AES, \
+                        PSA_ALG_CBC_NO_PADDING, \
+                        CTAP_AES_BLOCK_ALIGNED_SZ(x)))
+
+#define CTAP_FLASH_RK_SZ (CTAP_AES_ENC_SZ(ctap_resident_key_t) + \
+                        CTAP_FLASH_ALIGN_PAD(uint8_t[CTAP_AES_ENC_SZ(ctap_resident_key_t)]))
+/*
+ #define CTAP_FLASH_RK_SZ (((sizeof(ctap_resident_key_t) + \
+                          CTAP_FLASH_ALIGN_PAD(ctap_resident_key_t)) / 16 + 1) * 16)
+*/
+#else
 #define CTAP_FLASH_RK_SZ (sizeof(ctap_resident_key_t) + \
                           CTAP_FLASH_ALIGN_PAD(ctap_resident_key_t))
-
+#endif
 /**
  * @brief State struct size with alignment padding
  */

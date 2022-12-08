@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 #include "hashes/sha256.h"
+#include "psa/crypto.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +46,9 @@ extern "C" {
  * @brief Elliptic curve public key
  */
 typedef struct {
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS)
+    uint8_t b1;  /* psa stores the byte 0x04 before the coordinates for idk what reason */
+#endif
     uint8_t x[CTAP_CRYPTO_KEY_SIZE];    /**< x coordinate of curve point */
     uint8_t y[CTAP_CRYPTO_KEY_SIZE];    /**< y coordinate of curve point */
 } ctap_crypto_pub_key_t;
@@ -55,8 +59,14 @@ typedef struct {
  * CTAP specification (version 20190130) section 5.5.4
  */
 typedef struct {
-    ctap_crypto_pub_key_t pub;          /**< public key */
-    uint8_t priv[CTAP_CRYPTO_KEY_SIZE]; /**< private key */
+    ctap_crypto_pub_key_t pub_key;          /**< public key */
+    union {
+// ECDH not supported by PSA yet so this has to wait
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS) && 0
+        psa_key_id_t priv_key_id;                   /**< id of private key stored in SE */
+#endif
+        uint8_t priv_key[CTAP_CRYPTO_KEY_SIZE];     /**< private key */
+    };
 } ctap_crypto_key_agreement_key_t;
 
 /**
@@ -186,6 +196,14 @@ int fido2_ctap_crypto_hmac_sha256(const void *key,
  */
 int fido2_ctap_crypto_gen_keypair(uint8_t *pub_key, uint8_t *priv_key);
 
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS)
+int fido2_ctap_crypto_gen_keypair_se(ctap_crypto_pub_key_t *pub_key, psa_key_id_t *key_id, size_t len);
+#endif
+
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
+int fido2_ctap_crypto_gen_aeskey_se(psa_key_id_t *key_id);
+#endif
+
 /**
  * @brief Elliptic-curve Diffie-Hellmann
  *
@@ -214,6 +232,12 @@ int fido2_ctap_crypto_ecdh(uint8_t *out, size_t len,
  */
 int fido2_ctap_crypto_get_sig(uint8_t *hash, size_t hash_len, uint8_t *sig,
                               size_t *sig_len, const uint8_t *key, size_t key_len);
+
+
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS)
+int fido2_ctap_crypto_get_sig_se(uint8_t* hash, size_t hash_len, uint8_t *sig,
+                                 size_t* sig_len, psa_key_id_t key_id);
+#endif
 
 /**
  * @brief Encrypt data using AES-256-CBC
@@ -244,6 +268,14 @@ int fido2_ctap_crypto_aes_enc(uint8_t * out, size_t *out_len, uint8_t * in,
  */
 int fido2_ctap_crypto_aes_dec(uint8_t * out, size_t *out_len, uint8_t * in,
                               size_t in_len, const uint8_t * key, size_t key_len);
+
+
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
+int fido2_ctap_crypto_aes_enc_se(uint8_t *out, size_t out_len, uint8_t *in,
+                                size_t in_len);
+int fido2_ctap_crypto_aes_dec_se(uint8_t *out, size_t out_len, uint8_t *in,
+                                size_t in_len);
+#endif
 
 /**
  * @brief Encrypt data using AES-128-CCM

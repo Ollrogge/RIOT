@@ -34,6 +34,10 @@
 #include "timex.h"
 #include "board.h"
 
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS) || IS_ACTIVE(CONFIG_FIDO2_CTAP_ENC_CREDS)
+#include "psa/crypto.h"
+#endif
+
 #include "fido2/ctap.h"
 #include "fido2/ctap/ctap_crypto.h"
 
@@ -450,7 +454,7 @@ typedef struct {
  * https://www.iana.org/assignments/cose/cose.xhtml
  */
 typedef struct {
-    ctap_crypto_pub_key_t pubkey;   /**< public key */
+    ctap_crypto_pub_key_t pub_key;   /**< public key */
     int kty;                        /**< identification of key type */
     int crv;                        /**< EC identifier */
     int32_t alg_type;               /**< COSEAlgorithmIdentifier */
@@ -485,10 +489,15 @@ struct __attribute__((packed)) ctap_resident_key {
     uint8_t rp_id_hash[SHA256_DIGEST_LENGTH];   /**< hash of rp domain string */
     uint8_t user_id[CTAP_USER_ID_MAX_SIZE];     /**< id of user */
     uint8_t user_id_len;                        /**< length of the user id */
-    uint8_t priv_key[CTAP_CRYPTO_KEY_SIZE];     /**< private key */
 #ifdef CONFIG_FIDO2_LORAWAN_SAVE_PUB_KEY
      ctap_crypto_pub_key_t pub_key;
 #endif
+    union {
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS)
+        psa_key_id_t priv_key_id;                   /**< id of private key stored in SE */
+#endif
+        uint8_t priv_key[CTAP_CRYPTO_KEY_SIZE];     /**< private key */
+    };
     uint32_t id;                                /**< internal id to find most recent key */
     uint32_t sign_count;                        /**< signature counter.
                                                    See webauthn specification

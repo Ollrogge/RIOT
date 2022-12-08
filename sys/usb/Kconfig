@@ -4,13 +4,13 @@
 # General Public License v2.1. See the file LICENSE in the top level
 # directory for more details.
 #
-menuconfig KCONFIG_USB
+menuconfig MODULE_USB
     bool "Configure USB"
     depends on MODULE_USBUS || PACKAGE_TINYUSB
     help
         Configure the USB peripheral via Kconfig.
 
-if KCONFIG_USB
+if MODULE_USB
 
 menu "Power management"
 

@@ -3,8 +3,14 @@ BOARD ?= nrf52840dk
 
 include ../Makefile.tests_common
 
-USEMODULE += fido2_ctap_transport_hid
-USEPKG += fido2_tests
+#CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=4096
+
+#USEMODULE += fido2_ctap_transport_hid
+#USEPKG += fido2_tests
+
+DEVELHELP ?= 1
+
+export TEST_KCONFIG ?= 1
 
 USB_VID ?= $(USB_VID_TESTING)
 USB_PID ?= $(USB_PID_TESTING)

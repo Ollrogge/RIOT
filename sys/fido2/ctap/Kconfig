@@ -35,7 +35,6 @@ menuconfig MODULE_FIDO2_CTAP
         between an authenticator and a host. CTAP is part of the FIDO2 Project.
         For more information visit https://fidoalliance.org/fido2.
 
-
 if MODULE_FIDO2_CTAP
 
 config FIDO2_CTAP_STACK_SIZE
@@ -74,6 +73,14 @@ config FIDO2_CTAP_UP_BUTTON_PIN
     int "Pin of user presence button"
     depends on !FIDO2_CTAP_DISABLE_UP
     default -1
+
+config FIDO2_CTAP_SE_CREDS
+    depends on PSA_SECURE_ELEMENT
+    bool "Use secure element to store creds"
+
+config FIDO2_CTAP_SE_ENC_CREDS
+    depends on PSA_SECURE_ELEMENT
+    bool "Use aes based on key stored in SE to encrypt credentials"
 
 choice
     bool "User presence button mode"

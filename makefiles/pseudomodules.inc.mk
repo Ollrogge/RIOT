@@ -58,6 +58,7 @@ PSEUDOMODULES += dhcpv6_client_mud_url
 PSEUDOMODULES += dhcpv6_relay
 PSEUDOMODULES += dns_cache
 PSEUDOMODULES += dns_msg
+PSEUDOMODULES += driver_cryptocell
 PSEUDOMODULES += ecc_%
 PSEUDOMODULES += ethos_stdio
 PSEUDOMODULES += event_%
@@ -349,6 +350,16 @@ PSEUDOMODULES += posix_headers
 PSEUDOMODULES += printf_float
 PSEUDOMODULES += prng
 PSEUDOMODULES += prng_%
+PSEUDOMODULES += psa_riot_cipher_aes_common
+PSEUDOMODULES += psa_riot_cipher_aes_128_ecb
+PSEUDOMODULES += psa_riot_cipher_aes_128_cbc
+PSEUDOMODULES += psa_riot_cipher_aes_192_cbc
+PSEUDOMODULES += psa_riot_cipher_aes_256_cbc
+PSEUDOMODULES += psa_riot_hashes_md5
+PSEUDOMODULES += psa_riot_hashes_sha1
+PSEUDOMODULES += psa_riot_hashes_sha224
+PSEUDOMODULES += psa_riot_hashes_sha256
+PSEUDOMODULES += psa_riot_hashes_hmac_sha256
 PSEUDOMODULES += fortuna_reseed
 ## @defgroup pseudomodule_random_cmd random_cmd
 ## @ingroup sys_shell_commands

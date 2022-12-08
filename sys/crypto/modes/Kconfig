@@ -5,6 +5,18 @@
 # directory for more details.
 #
 
+config MODULE_CIPHER_MODES_CBC
+    bool "Cipher CBC Mode"
+    select MODULE_CIPHER_MODES
+
+config MODULE_CIPHER_MODES_CCM
+    bool "Cipher CCM Mode"
+    select MODULE_CIPHER_MODES
+
+config MODULE_CIPHER_MODES_CTR
+    bool "Cipher CCM Mode"
+    select MODULE_CIPHER_MODES
+
 config MODULE_CIPHER_MODES
     bool "Modes for block ciphers"
     depends on MODULE_CRYPTO

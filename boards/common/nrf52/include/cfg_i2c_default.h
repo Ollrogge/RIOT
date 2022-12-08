@@ -21,6 +21,7 @@
 #define CFG_I2C_DEFAULT_H
 
 #include "periph_cpu.h"
+#include "kernel_defines.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,9 +33,9 @@ extern "C" {
  */
 static const i2c_conf_t i2c_config[] = {
     {
-        .dev = NRF_TWIM1,
-        .scl = 27,
-        .sda = 26,
+        .dev = NRF_TWIM0,
+        .scl = 11,
+        .sda = 12,
         .speed = I2C_SPEED_NORMAL
     }
 };

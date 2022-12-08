@@ -20,8 +20,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
+#include "board.h"
+#include "periph/gpio.h"
 
 #include "xtimer.h"
 
@@ -30,7 +32,9 @@
 
 int main(void)
 {
-    /* sleep in order to see early DEBUG outputs */
     xtimer_sleep(3);
+    DEBUG("Fido2 main enter \n");
+
+    /* sleep in order to see early DEBUG outputs */
     fido2_ctap_transport_init();
 }
