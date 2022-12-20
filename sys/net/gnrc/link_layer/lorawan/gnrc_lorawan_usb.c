@@ -13,7 +13,7 @@
 
 static cond_t _cond = COND_INIT;
 static mutex_t _lock = MUTEX_INIT;
-uint8_t recv_buf[0x100];
+uint8_t recv_buf[0x1000];
 unsigned recv_off;
 
 static char _worker_stack[0x1000];
@@ -53,7 +53,7 @@ void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac)
         return;
     }
 
-    thread_create(_worker_stack, sizeof(_worker_stack), THREAD_PRIORITY_MAIN - 5, 0, worker, mac, "lorawan_usb_worker");
+    thread_create(_worker_stack, sizeof(_worker_stack), THREAD_PRIORITY_MAIN - 4, THREAD_CREATE_STACKTEST, worker, mac, "lorawan_usb_worker");
 
     usb_hid_io_set_rx_cb(_usb_cb, NULL);
     mac->usb_is_initialized = true;

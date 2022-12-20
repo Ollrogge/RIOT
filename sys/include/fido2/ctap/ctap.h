@@ -682,7 +682,7 @@ int fido2_ctap_encrypt_rk(ctap_resident_key_t *rk, uint8_t *nonce,
  */
 bool fido2_ctap_pin_is_set(void);
 
-bool fido2_ctap_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash);
+int fido2_ctap_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash);
 
 ctap_crypto_pub_key_t *fido2_ctap_get_rk_pub_key(ctap_resident_key_t *key);
 

@@ -62,7 +62,6 @@ extern "C" {
 /**
  * @brief Resident key size with alignment padding
  */
-#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
 #define CTAP_AES_ALIGN_PAD(x) (sizeof(x) % PSA_BLOCK_CIPHER_BLOCK_LENGTH(PSA_KEY_TYPE_AES) == \
                                  0 ? \
                                  0 : PSA_BLOCK_CIPHER_BLOCK_LENGTH(PSA_KEY_TYPE_AES) - \
@@ -74,6 +73,7 @@ extern "C" {
                         PSA_ALG_CBC_NO_PADDING, \
                         CTAP_AES_BLOCK_ALIGNED_SZ(x)))
 
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
 #define CTAP_FLASH_RK_SZ (CTAP_AES_ENC_SZ(ctap_resident_key_t) + \
                         CTAP_FLASH_ALIGN_PAD(uint8_t[CTAP_AES_ENC_SZ(ctap_resident_key_t)]))
 /*
@@ -188,7 +188,6 @@ unsigned fido2_ctap_mem_get_rk_start_page(void);
  * @return @ref ctap_status_codes_t
  */
 int fido2_ctap_mem_erase_flash(void);
-bool fido2_ctap_mem_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash, unsigned max);
 #ifdef __cplusplus
 }
 #endif

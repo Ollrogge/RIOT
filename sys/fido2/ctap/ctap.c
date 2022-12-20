@@ -243,6 +243,8 @@ static inline bool _is_locked(void);
 
 static void _set_rk_pub_key(ctap_resident_key_t *rk, ctap_crypto_pub_key_t *pub_key);
 
+static int read_enc_rk(void *rk, uint32_t page, uint32_t offset);
+
 /**
  * @brief State of authenticator
  */
@@ -1036,7 +1038,6 @@ static int _set_pin(ctap_client_pin_req_t *req)
     }
 
     _save_pin(new_pin_dec, sz);
-
     _reset_pin_attempts();
 
     ret = CTAP2_OK;
@@ -1457,7 +1458,9 @@ static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
 {
     uint8_t index = 0;
     uint8_t rp_id_hash[SHA256_DIGEST_LENGTH] = { 0 };
-    ctap_resident_key_t rk;
+    uint8_t rk_buf[IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS) ?
+        CTAP_AES_ENC_SZ(ctap_resident_key_t) : sizeof(ctap_resident_key_t)] = {0};
+    ctap_resident_key_t *rk = (ctap_resident_key_t *)rk_buf;
     int ret;
 
     ret = fido2_ctap_crypto_sha256(rp_id, rp_id_len, rp_id_hash);
@@ -1493,19 +1496,9 @@ static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
         }
 
 #if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
-        uint8_t buf[CTAP_AES_ENC_SZ(ctap_resident_key_t)] = {0};
-        uint8_t rk_aligned[CTAP_AES_ENC_SZ(ctap_resident_key_t)] = {0};
-
-        ret = fido2_ctap_mem_read(buf, page_num, offset_into_page, sizeof(buf));
-
-        if (ret != CTAP2_OK) {
-            return ret;
-        }
-
-        ret = fido2_ctap_crypto_aes_dec_se(rk_aligned, sizeof(rk_aligned), buf, sizeof(buf));
-        memcpy(&rk, rk_aligned, sizeof(rk));
+        ret = read_enc_rk(rk, page_num, offset_into_page);
 #else
-        ret = fido2_ctap_mem_read(&rk, page_num, offset_into_page, sizeof(rk));
+        ret = fido2_ctap_mem_read(rk, page_num, offset_into_page, sizeof(*rk));
 #endif
 
         if (ret != CTAP2_OK) {
@@ -1513,17 +1506,17 @@ static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
         }
 
         /* search for rk's matching rp_id_hash */
-        if (memcmp(rk.rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0) {
+        if (memcmp(rk->rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0) {
             if (allow_list_len == 0) {
-                memcpy(&rks[index], &rk, sizeof(rk));
+                memcpy(&rks[index], rk, sizeof(*rk));
                 index++;
             }
             else {
                 /* if allow list is present, also check that cred_id is in list */
                 for (size_t j = 0; j < allow_list_len; j++) {
-                    if (memcmp(allow_list[j].cred_id.id, rk.cred_desc.cred_id,
-                               sizeof(rk.cred_desc.cred_id)) == 0) {
-                        memcpy(&rks[index], &rk, sizeof(rk));
+                    if (memcmp(allow_list[j].cred_id.id, rk->cred_desc.cred_id,
+                               sizeof(rk->cred_desc.cred_id)) == 0) {
+                        memcpy(&rks[index], rk, sizeof(*rk));
                         index++;
                         break;
                     }
@@ -1532,7 +1525,7 @@ static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
                         ret = _ctap_decrypt_rk(&rks[index],
                                                &allow_list[j].cred_id);
                         if (ret == CTAP2_OK) {
-                            if (memcmp(rks[index].rp_id_hash, rk.rp_id_hash,
+                            if (memcmp(rks[index].rp_id_hash, rk->rp_id_hash,
                                        SHA256_DIGEST_LENGTH) == 0) {
                                 index++;
                                 break;
@@ -1559,6 +1552,25 @@ static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
     return index;
 }
 
+static int read_enc_rk(void *rk, uint32_t page, uint32_t offset)
+{
+    (void) rk;
+    (void) page;
+    (void) offset;
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
+    int ret = fido2_ctap_mem_read(rk, page, offset, CTAP_AES_ENC_SZ(ctap_resident_key_t));
+
+    if (ret != CTAP2_OK) {
+        return ret;
+    }
+
+    return fido2_ctap_crypto_aes_dec_se(rk, CTAP_AES_ENC_SZ(ctap_resident_key_t)
+                                        ,rk, CTAP_AES_ENC_SZ(ctap_resident_key_t));
+#endif
+
+    return CTAP2_OK;
+}
+
 /**
  * overwrite existing key if equal, else find free space.
  *
@@ -1572,7 +1584,10 @@ static int _save_rk(ctap_resident_key_t *rk)
     int page_num = fido2_ctap_mem_flash_page() + CTAP_FLASH_RK_OFF;
     int offset_into_page = 0;
     bool equal = false;
-    ctap_resident_key_t rk_tmp = { 0 };
+    uint8_t rk_buf[IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS) ?
+        CTAP_AES_ENC_SZ(ctap_resident_key_t) : sizeof(ctap_resident_key_t)] = {0};
+
+    ctap_resident_key_t *rk_tmp = (ctap_resident_key_t*)rk_buf;
 
     if (_state.rk_amount_stored > 0) {
         for (uint16_t i = 0; i <= _state.rk_amount_stored; i++) {
@@ -1593,19 +1608,9 @@ static int _save_rk(ctap_resident_key_t *rk)
             }
 
 #if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
-            uint8_t buf[CTAP_AES_ENC_SZ(ctap_resident_key_t)] = {0};
-            uint8_t rk_aligned[CTAP_AES_ENC_SZ(ctap_resident_key_t)] = {0};
-
-            ret = fido2_ctap_mem_read(buf, page_num, offset_into_page, sizeof(buf));
-
-            if (ret != CTAP2_OK) {
-                return ret;
-            }
-
-            ret = fido2_ctap_crypto_aes_dec_se(rk_aligned, sizeof(rk_aligned), buf, sizeof(buf));
-            memcpy(&rk_tmp, rk_aligned, sizeof(rk_tmp));
+            ret = read_enc_rk(rk_tmp, page_num, offset_into_page);
 #else
-            ret = fido2_ctap_mem_read(&rk_tmp, page_num, offset_into_page, sizeof(rk_tmp));
+            ret = fido2_ctap_mem_read(rk_tmp, page_num, offset_into_page, sizeof(*rk_tmp));
 #endif
 
             if (ret != CTAP2_OK) {
@@ -1613,7 +1618,7 @@ static int _save_rk(ctap_resident_key_t *rk)
             }
 
             /* if equal overwrite */
-            if (fido2_ctap_utils_ks_equal(&rk_tmp, rk)) {
+            if (fido2_ctap_utils_ks_equal(rk_tmp, rk)) {
                 equal = true;
                 break;
             }
@@ -1897,13 +1902,10 @@ static int _write_rk_to_flash(const ctap_resident_key_t *rk, int page, int offse
 {
 #if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)
     int ret;
-    uint8_t c[CTAP_FLASH_RK_SZ] = {0};
-    uint8_t rk_aligned[CTAP_AES_BLOCK_ALIGNED_SZ(ctap_resident_key_t)] = {0};
-
-    memcpy(rk_aligned, rk, sizeof(*rk));
+    uint8_t c[CTAP_AES_ENC_SZ(ctap_resident_key_t)] = {0};
 
     ret = fido2_ctap_crypto_aes_enc_se(c, CTAP_AES_ENC_SZ(ctap_resident_key_t),
-                                        rk_aligned, sizeof(rk_aligned));
+                                     (void*)rk, CTAP_AES_BLOCK_ALIGNED_SZ(ctap_resident_key_t));
 
     if (ret != CTAP2_OK) {
         return ret;
@@ -1990,7 +1992,43 @@ int fido2_ctap_get_sig(const uint8_t *auth_data, size_t auth_data_len,
 #endif
 }
 
-bool fido2_ctap_get_rk(ctap_resident_key_t *key, uint8_t* rp_id_hash)
+int fido2_ctap_get_rk(ctap_resident_key_t *rk, uint8_t* rp_id_hash)
 {
-    return fido2_ctap_mem_get_rk(key, rp_id_hash, _state.rk_amount_stored);
+    int ret;
+    int page = 0x0;
+    int offset = 0x0;
+    int id = -1;
+
+    for (int i = 0; i < _state.rk_amount_stored; i++) {
+        page =  fido2_ctap_mem_get_flashpage_number_of_rk(i);
+
+        if (page< 0) {
+            return CTAP1_ERR_OTHER;
+        }
+
+        offset = fido2_ctap_mem_get_offset_of_rk_into_flashpage(i);
+
+        if (offset < 0) {
+            return CTAP1_ERR_OTHER;
+        }
+
+        if (IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_ENC_CREDS)) {
+            ret = read_enc_rk(rk, page, offset);
+        }
+        else {
+            ret = fido2_ctap_mem_read(rk, page, offset, sizeof(*rk));
+        }
+
+        if (ret != CTAP2_OK) {
+            return ret;
+        }
+
+        if (memcmp(rk->rp_id_hash, rp_id_hash, SHA256_DIGEST_LENGTH) == 0) {
+            if ((int)rk->id > id) {
+                id = rk->id;
+            }
+        }
+    }
+
+    return id > -1 ? CTAP2_OK : CTAP1_ERR_OTHER;
 }

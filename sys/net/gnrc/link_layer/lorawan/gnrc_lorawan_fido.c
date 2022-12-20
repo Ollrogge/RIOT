@@ -29,14 +29,21 @@ static void _join_accpt(event_t *arg);
 
 // uint8_t priv_js[] = {0xf2, 0x93, 0x93, 0x97, 0x1f, 0x62, 0x2c, 0x8b, 0x1e, 0xb9, 0xec, 0x84, 0x6c, 0x8c, 0x6a, 0xe6, 0xa9, 0x5a, 0xe1, 0xc3, 0xbc, 0x76, 0x27, 0x65, 0xee, 0x7d, 0x1c, 0x18, 0xac, 0x85, 0x55, 0x61};
 
-static event_t _join_accpt_event = {.handler = _join_accpt};
+static event_t _join_accpt_event = { .handler = _join_accpt };
 
 typedef struct
 {
     ctap_req_t req;
     ctap_resp_t resp;
     fido_lora_state_t state;
+#ifdef CONFIG_FIDO2_CTAP_SE_ENC_CREDS
+    union {
+        ctap_resident_key_t key;
+        uint8_t pad[CTAP_AES_ENC_SZ(ctap_resident_key_t)];
+    };
+#else
     ctap_resident_key_t key;
+#endif
 } state_t;
 
 static state_t _state = {
@@ -60,28 +67,35 @@ static void print_hex(void* buf, size_t len) {
 
 int gnrc_lorawan_fido_derive_root_keys(gnrc_lorawan_t *mac, uint8_t *deveui)
 {
+    int ret = CTAP2_OK;
     uint32_t start = ztimer_now(ZTIMER_MSEC);
 
     uint8_t rp_id_hash[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t pub_js[0x40];
+    uint8_t pub_js[0x40 + 0x1];
     sha256(CONFIG_FIDO2_LORAWAN_RP_ID, strlen(CONFIG_FIDO2_LORAWAN_RP_ID), rp_id_hash);
     ctap_resident_key_t *key = &_state.key;
-    bool found = fido2_ctap_get_rk(key, rp_id_hash);
 
-    if (!found)
-    {
-        DEBUG("Unable to find resident key for rp_id: %s \n", CONFIG_FIDO2_LORAWAN_RP_ID);
-        return -1;
-    }
-
-    fmt_hex_bytes(pub_js, CONFIG_FIDO2_LORAWAN_PUB_JS);
-
-    uint8_t secret[CTAP_CRYPTO_KEY_SIZE] = {0};
-
-    int ret = fido2_ctap_crypto_ecdh(secret, sizeof(secret), pub_js, key->priv_key, sizeof(key->priv_key));
+    ret = fido2_ctap_get_rk(key, rp_id_hash);
 
     if (ret != CTAP2_OK)
     {
+        DEBUG("ERROR: Unable to find resident key for rp_id: %s \n", CONFIG_FIDO2_LORAWAN_RP_ID);
+        return -1;
+    }
+
+#if IS_ACTIVE(CONFIG_FIDO2_CTAP_SE_CREDS)
+    pub_js[0] = 0x4;
+    fmt_hex_bytes(&pub_js[1], CONFIG_FIDO2_LORAWAN_PUB_JS);
+#else
+    fmt_hex_bytes(pub_js, CONFIG_FIDO2_LORAWAN_PUB_JS);
+#endif
+    uint8_t secret[CTAP_CRYPTO_KEY_SIZE] = {0};
+
+    ret = fido2_ctap_crypto_ecdh(secret, sizeof(secret), pub_js, key->priv_key, sizeof(key->priv_key));
+
+    if (ret != CTAP2_OK)
+    {
+        DEBUG("Error %s: ecdh \n", __func__);
         return -1;
     }
 
@@ -211,7 +225,6 @@ int gnrc_lorawan_fido_join_accpt(uint8_t *data, size_t length)
      */
     event_post(queue, &_join_accpt_event);
 
-    DEBUG("waiting \n");
     mutex_lock(&_lock);
     cond_wait(&_cond, &_lock);
     mutex_unlock(&_lock);
@@ -219,7 +232,6 @@ int gnrc_lorawan_fido_join_accpt(uint8_t *data, size_t length)
     uint32_t end = ztimer_now(ZTIMER_MSEC);
 
     DEBUG("fido2 request processing took: %lu \n", end - start);
-    // DEBUG("lora thread back \n");
 
     if (_state.resp.status != CTAP2_OK)
     {
@@ -234,6 +246,8 @@ int gnrc_lorawan_fido_join_accpt(uint8_t *data, size_t length)
 static void _join_accpt(event_t *arg)
 {
     (void)arg;
+
+    DEBUG("join accept callback \n");
 
     size_t len = fido2_ctap_handle_request(&_state.req, &_state.resp);
 
