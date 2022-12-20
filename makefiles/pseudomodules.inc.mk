@@ -450,6 +450,7 @@ PSEUDOMODULES += shell_cmd_suit
 PSEUDOMODULES += shell_cmd_sys
 PSEUDOMODULES += shell_cmd_vfs
 PSEUDOMODULES += shell_cmds_default
+PSEUDOMODULES += shell_cmd_txtsnd
 ## @addtogroup sys_shell_commands
 ## @{
 ## @deprecated  Use module `shell_cmds_default` instead;
