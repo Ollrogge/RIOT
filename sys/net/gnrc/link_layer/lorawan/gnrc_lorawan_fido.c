@@ -251,12 +251,11 @@ static void _join_accpt(event_t *arg)
 
     size_t len = fido2_ctap_handle_request(&_state.req, &_state.resp);
 
+    DEBUG("Signaling %d\n", _state.resp.status);
+
     _state.resp.length = len;
 
-    DEBUG("Signaling \n");
     cond_signal(&_cond);
-
-    DEBUG("fido2 resp: %u \n", _state.resp.status);
 }
 
 void gnrc_lorawan_reset_state(void)

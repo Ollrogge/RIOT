@@ -91,7 +91,6 @@ void gnrc_lorawan_trigger_join(gnrc_lorawan_t *mac)
     }
 
     if (IS_USED(CONFIG_LORAWAN_OVER_USB)) {
-        DEBUG("Sending lorawan data over USB: %u \n", (unsigned)iolist_size(&pkt));
         gnrc_lorawan_usb_init(mac);
         gnrc_lorawan_usb_send(mac, &pkt);
     }
@@ -208,10 +207,8 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
 
     gnrc_lorawan_calculate_join_acpt_mic(data, size - MIC_SIZE, mac, &mic);
 
-    DEBUG("MICS: %lx %lx \n", mic.u32, expected_mic->u32);
-
     if (mic.u32 != expected_mic->u32) {
-        DEBUG("gnrc_lorawan_mlme: wrong MIC.\n");
+        DEBUG("gnrc_lorawan_mlme: MIC mismatch.\n");
         status = -EBADMSG;
         goto out;
     }

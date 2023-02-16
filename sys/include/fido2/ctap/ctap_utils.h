@@ -66,7 +66,8 @@ static inline int fido2_ctap_utils_cred_cmp(const void *k1, const void *k2)
     ctap_resident_key_t *_k1 = (ctap_resident_key_t *)k1;
     ctap_resident_key_t *_k2 = (ctap_resident_key_t *)k2;
 
-    return _k1->id - _k2->id;
+     /* multiply by -1 because we want descending order. */
+    return (_k1->id - _k2->id) * -1;
 }
 
 /**

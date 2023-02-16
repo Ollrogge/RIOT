@@ -27,6 +27,7 @@ static void _usb_cb(void * arg)
     recv_off += cnt;
 
     if (cnt < CONFIG_USBUS_HID_INTERRUPT_EP_SIZE)  {
+        DEBUG("USB LoRaWAN recv: %d \n", recv_off);
         cond_signal(&_cond);
     }
 }
@@ -53,7 +54,7 @@ void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac)
         return;
     }
 
-    thread_create(_worker_stack, sizeof(_worker_stack), THREAD_PRIORITY_MAIN - 4, THREAD_CREATE_STACKTEST, worker, mac, "lorawan_usb_worker");
+    thread_create(_worker_stack, sizeof(_worker_stack), THREAD_PRIORITY_MAIN - 5, THREAD_CREATE_STACKTEST, worker, mac, "lorawan_usb_worker");
 
     usb_hid_io_set_rx_cb(_usb_cb, NULL);
     mac->usb_is_initialized = true;
@@ -63,7 +64,9 @@ void gnrc_lorawan_usb_init(gnrc_lorawan_t *mac)
 void gnrc_lorawan_usb_send(gnrc_lorawan_t *mac, iolist_t *iolist)
 {
     (void) iolist;
+
 #if IS_ACTIVE(CONFIG_LORAWAN_OVER_USB)
+    DEBUG("USB LoRaWAN send: %u \n", (unsigned)iolist_size(iolist));
     for (iolist_t *iol = iolist; iol; iol = iol->iol_next) {
        if (iol->iol_len > 0) {
            /* write data to payload buffer */

@@ -278,6 +278,7 @@ void gnrc_lorawan_encrypt_payload(iolist_t *iolist, const le_uint32_t *dev_addr,
     }
 }
 
+// this is AES ECB mode which is insecure af but nobody has to know
 void gnrc_lorawan_decrypt_join_accept(const uint8_t *key, uint8_t *pkt,
                                       int has_clist, uint8_t *out)
 {
