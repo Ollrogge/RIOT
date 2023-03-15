@@ -1,0 +1,16 @@
+USEMODULE += tinydtls2
+
+USEMODULE += memarray
+USEMODULE += hashes
+USEMODULE += random
+USEMODULE += tinydtls_aes
+USEMODULE += tinydtls_ecc
+USEMODULE += ztimer_msec
+
+# TinyDTLS only has support for 32-bit architectures ATM
+FEATURES_REQUIRED += arch_32bit
+
+ifneq (,$(filter sock_dtls,$(USEMODULE)))
+  USEMODULE += tinydtls_sock_dtls2
+  USEMODULE += ztimer_usec
+endif

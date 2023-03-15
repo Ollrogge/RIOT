@@ -18,7 +18,9 @@ USEMODULE += auto_init_gnrc_netif
 USEMODULE += gnrc_ipv6_default
 
 # Specify DTLS implementation
-USEPKG += tinydtls
+#EXTERNAL_PKG_DIRS+=/home/h0ps/Uni/BachelorArbeit/RIOT/pkg/tinydtls2
+USEPKG += tinydtls2
+#USEMODULE = tinydtls2
 
 # Pull in sock APIs
 USEMODULE += sock_dtls
@@ -43,7 +45,7 @@ CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT)
 # This adds support for TLS_PSK_WITH_AES_128_CCM_8
 # CFLAGS += -DCONFIG_DTLS_PSK
 # This adds support for TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
-# CFLAGS += -DCONFIG_DTLS_ECC
+CFLAGS += -DCONFIG_DTLS_ECC
 
 # Uncomment to enable debug logs
 # CFLAGS += -DCONFIG_DTLS_DEBUG

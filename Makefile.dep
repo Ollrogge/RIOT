@@ -86,7 +86,7 @@ ifneq (,$(filter tlsf-malloc,$(USEMODULE)))
 endif
 
 ifneq (,$(filter tinydtls_sock_dtls, $(USEMODULE)))
-    USEPKG += tinydtls
+    USEPKG += tinydtls2
 endif
 
 ifneq (,$(filter flashdb_%,$(USEMODULE)))
