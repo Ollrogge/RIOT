@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include "shell.h"
+#include "fido2/ctap.h"
 
 extern int dtls_client_cmd(int argc, char **argv);
 extern int dtls_server_cmd(int argc, char **argv);
@@ -32,6 +33,8 @@ static const shell_command_t shell_commands[] = {
 int main(void)
 {
     puts("DTLS sock example application");
+
+    fido2_ctap_init();
 
     /* start shell */
     puts("All up, running the shell now");

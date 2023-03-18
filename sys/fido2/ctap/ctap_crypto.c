@@ -258,6 +258,20 @@ int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key,
     return CTAP2_OK;
 }
 
+int fido2_ctap_crypto_get_sig_raw(uint8_t *hash, size_t hash_len, uint8_t *sig, const uint8_t *key, size_t key_len)
+{
+    assert(key_len == CTAP_CRYPTO_KEY_SIZE);
+
+    const struct uECC_Curve_t *curve = uECC_secp256r1();
+    int ret = uECC_sign(key, hash, hash_len, sig, curve);
+
+    if (ret == 0) {
+        return CTAP1_ERR_OTHER;
+    }
+
+    return CTAP2_OK;
+}
+
 int fido2_ctap_crypto_get_sig(uint8_t *hash, size_t hash_len, uint8_t *sig,
                               size_t *sig_len, const uint8_t *key,
                               size_t key_len)

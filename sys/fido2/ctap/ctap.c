@@ -540,12 +540,12 @@ static int _make_credential(ctap_req_t *req_raw)
     }
 
     /* last moment where transaction can be cancelled */
-    if (IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)) {
-        if (fido2_ctap_transport_hid_should_cancel()) {
-            ret = CTAP2_ERR_KEEPALIVE_CANCEL;
-            goto done;
-        }
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
+    if (fido2_ctap_transport_hid_should_cancel()) {
+        ret = CTAP2_ERR_KEEPALIVE_CANCEL;
+        goto done;
     }
+#endif
 
     /* user presence test to create a new credential */
     if (IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP)) {
@@ -697,10 +697,12 @@ static int _get_assertion(ctap_req_t *req_raw)
     rk = &_assert_state.rks[_assert_state.cred_counter++];
 
     /* last moment where transaction can be cancelled */
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
     if (fido2_ctap_transport_hid_should_cancel()) {
         ret = CTAP2_ERR_KEEPALIVE_CANCEL;
         goto done;
     }
+#endif
 
     ret = _make_auth_data_assert(req.rp_id, req.rp_id_len, &auth_data, uv,
                                  up,
@@ -989,12 +991,12 @@ static int _set_pin(ctap_client_pin_req_t *req)
     }
 
     /* last moment where transaction can be cancelled */
-    if (IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)) {
-        if (fido2_ctap_transport_hid_should_cancel()) {
-            ret = CTAP2_ERR_KEEPALIVE_CANCEL;
-            goto done;
-        }
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
+    if (fido2_ctap_transport_hid_should_cancel()) {
+        ret = CTAP2_ERR_KEEPALIVE_CANCEL;
+        goto done;
     }
+#endif
 
     sz = fmt_strnlen((char *)new_pin_dec, CTAP_PIN_MAX_SIZE + 1);
     if (sz < CTAP_PIN_MIN_SIZE || sz > CTAP_PIN_MAX_SIZE) {
@@ -1100,12 +1102,12 @@ static int _change_pin(ctap_client_pin_req_t *req)
     }
 
     /* last moment where transaction can be cancelled */
-    if (IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)) {
-        if (fido2_ctap_transport_hid_should_cancel()) {
-            ret = CTAP2_ERR_KEEPALIVE_CANCEL;
-            goto done;
-        }
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
+    if (fido2_ctap_transport_hid_should_cancel()) {
+        ret = CTAP2_ERR_KEEPALIVE_CANCEL;
+        goto done;
     }
+#endif
 
     /* verify decrypted pinHash against LEFT(SHA-256(curPin), 16) */
     if (memcmp(pin_hash_dec, _state.pin_hash, CTAP_PIN_TOKEN_SZ) != 0) {
@@ -1198,12 +1200,12 @@ static int _get_pin_token(ctap_client_pin_req_t *req)
     }
 
     /* last moment where transaction can be cancelled */
-    if (IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)) {
-        if (fido2_ctap_transport_hid_should_cancel()) {
-            ret = CTAP2_ERR_KEEPALIVE_CANCEL;
-            goto done;
-        }
+#if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
+    if (fido2_ctap_transport_hid_should_cancel()) {
+        ret = CTAP2_ERR_KEEPALIVE_CANCEL;
+        goto done;
     }
+#endif
 
     /* sha256 of shared secret ((abG).x) to obtain shared key */
     ret = fido2_ctap_crypto_sha256(shared_secret, sizeof(shared_secret), shared_key);

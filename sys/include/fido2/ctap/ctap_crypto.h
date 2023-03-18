@@ -200,6 +200,9 @@ int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key, uint8_t *priv_
 int fido2_ctap_crypto_ecdh(uint8_t *out, size_t len,
                            ctap_crypto_pub_key_t *pub_key, uint8_t *priv_key, size_t key_len);
 
+
+int fido2_ctap_crypto_get_sig_raw(uint8_t *hash, size_t hash_len, uint8_t *sig, const uint8_t *key, size_t key_len);
+
 /**
  * @brief Create cryptographic signature
  *

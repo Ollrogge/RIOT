@@ -60,6 +60,10 @@
 #  include "hmac.h"
 #endif /* WITH_SHA256 */
 
+#ifdef DTLS_FIDO
+#include "fido2/ctap/ctap_crypto.h"
+#endif
+
 #ifdef WITH_ZEPHYR
 LOG_MODULE_DECLARE(TINYDTLS, CONFIG_TINYDTLS_LOG_LEVEL);
 #endif /* WITH_ZEPHYR */

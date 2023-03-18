@@ -36,6 +36,9 @@ USEMODULE += prng_sha1prng
 USEMODULE += shell
 USEMODULE += shell_cmds_default
 
+USEMODULE += fido2_ctap
+CFLAGS += -DDTLS_FIDO
+
 # UDP Port to use (20220 is default for DTLS).
 DTLS_PORT ?= 20220
 CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT)
