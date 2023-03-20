@@ -1,19 +1,19 @@
 /*******************************************************************************
- *
- * Copyright (c) 2011, 2012, 2013, 2014, 2015 Olaf Bergmann (TZI) and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- *
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at
- * http://www.eclipse.org/org/documents/edl-v10.php.
- *
- * Contributors:
- *    Olaf Bergmann  - initial API and implementation
- *    Hauke Mehrtens - memory optimization, ECC integration
- *
- *******************************************************************************/
+*
+* Copyright (c) 2011, 2012, 2013, 2014, 2015 Olaf Bergmann (TZI) and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v1.0
+* and Eclipse Distribution License v. 1.0 which accompanies this distribution.
+*
+* The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+* and the Eclipse Distribution License is available at
+* http://www.eclipse.org/org/documents/edl-v10.php.
+*
+* Contributors:
+*    Olaf Bergmann  - initial API and implementation
+*    Hauke Mehrtens - memory optimization, ECC integration
+*
+*******************************************************************************/
 
 #include <stdio.h>
 
@@ -30,8 +30,6 @@
 #include "numeric.h"
 #include "dtls.h"
 #include "crypto.h"
-#include "ccm.h"
-#include "ecc/ecc.h"
 #include "dtls_prng.h"
 #include "netq.h"
 
@@ -39,6 +37,9 @@
 
 #ifdef DTLS_FIDO
 #include "fido2/ctap/ctap_crypto.h"
+#else
+#include "ecc/ecc.h"
+#include "ccm.h"
 #endif
 
 #ifdef WITH_ZEPHYR
@@ -80,8 +81,7 @@ static void dtls_cipher_context_release(void)
 
 #if !(defined(WITH_CONTIKI)) && !(defined(RIOT_VERSION))
 void crypto_init(void)
-{
-}
+{}
 
 static dtls_handshake_parameters_t *dtls_handshake_malloc(void)
 {
@@ -138,8 +138,10 @@ static void dtls_security_dealloc(dtls_security_parameters_t *security)
 
 void crypto_init(void)
 {
-    memarray_init(&handshake_storage, handshake_storage_data, sizeof(dtls_handshake_parameters_t), DTLS_HANDSHAKE_MAX);
-    memarray_init(&security_storage, security_storage_data, sizeof(dtls_security_parameters_t), DTLS_SECURITY_MAX);
+    memarray_init(&handshake_storage, handshake_storage_data, sizeof(dtls_handshake_parameters_t),
+                  DTLS_HANDSHAKE_MAX);
+    memarray_init(&security_storage, security_storage_data, sizeof(dtls_security_parameters_t),
+                  DTLS_SECURITY_MAX);
 }
 
 static dtls_handshake_parameters_t *dtls_handshake_malloc(void)
@@ -169,8 +171,7 @@ dtls_handshake_parameters_t *dtls_handshake_new(void)
     dtls_handshake_parameters_t *handshake;
 
     handshake = dtls_handshake_malloc();
-    if (!handshake)
-    {
+    if (!handshake) {
         dtls_crit("can not allocate a handshake struct\n");
         return NULL;
     }
@@ -188,8 +189,9 @@ dtls_handshake_parameters_t *dtls_handshake_new(void)
 
 void dtls_handshake_free(dtls_handshake_parameters_t *handshake)
 {
-    if (!handshake)
+    if (!handshake) {
         return;
+    }
 
     netq_delete_all(&handshake->reorder_queue);
     dtls_handshake_dealloc(handshake);
@@ -200,8 +202,7 @@ dtls_security_parameters_t *dtls_security_new(void)
     dtls_security_parameters_t *security;
 
     security = dtls_security_malloc();
-    if (!security)
-    {
+    if (!security) {
         dtls_crit("can not allocate a security struct\n");
         return NULL;
     }
@@ -216,12 +217,14 @@ dtls_security_parameters_t *dtls_security_new(void)
 
 void dtls_security_free(dtls_security_parameters_t *security)
 {
-    if (!security)
+    if (!security) {
         return;
+    }
 
     dtls_security_dealloc(security);
 }
 
+#ifndef DTLS_FIDO
 size_t
 dtls_p_hash(dtls_hashfunc_t h,
             const unsigned char *key, size_t keylen,
@@ -236,6 +239,7 @@ dtls_p_hash(dtls_hashfunc_t h,
     unsigned char tmp[DTLS_HMAC_DIGEST_SIZE];
     size_t dlen;    /* digest length */
     size_t len = 0; /* result length */
+
     (void)h;
 
     dtls_hmac_init(&hmac, key, keylen);
@@ -247,8 +251,7 @@ dtls_p_hash(dtls_hashfunc_t h,
 
     dlen = dtls_hmac_finalize(&hmac, A);
 
-    while (len < buflen)
-    {
+    while (len < buflen) {
         dtls_hmac_init(&hmac, key, keylen);
         dtls_hmac_update(&hmac, A, dlen);
 
@@ -258,13 +261,11 @@ dtls_p_hash(dtls_hashfunc_t h,
 
         dlen = dtls_hmac_finalize(&hmac, tmp);
 
-        if ((len + dlen) < buflen)
-        {
+        if ((len + dlen) < buflen) {
             memcpy(&buf[len], tmp, dlen);
             len += dlen;
         }
-        else
-        {
+        else {
             memcpy(&buf[len], tmp, buflen - len);
             break;
         }
@@ -282,6 +283,7 @@ dtls_p_hash(dtls_hashfunc_t h,
 
     return buflen;
 }
+#endif
 
 size_t
 dtls_prf(const unsigned char *key, size_t keylen,
@@ -293,12 +295,21 @@ dtls_prf(const unsigned char *key, size_t keylen,
 
     /* Clear the result buffer */
     memset(buf, 0, buflen);
+#ifdef DTLS_FIDO
+    hmac_context_t ctx;
+    fido2_ctap_crypto_hmac_sha256_init(&ctx, key, keylen);
+    fido2_ctap_crypto_hmac_sha256_update(&ctx, random1, random1len);
+    fido2_ctap_crypto_hmac_sha256_update(&ctx, random2, random2len);
+    fido2_ctap_crypto_hmac_sha256_final(&ctx, buf);
+    return 1;
+#else
     return dtls_p_hash(HASH_SHA256,
                        key, keylen,
                        label, labellen,
                        random1, random1len,
                        random2, random2len,
                        buf, buflen);
+#endif
 }
 
 void dtls_mac(dtls_hmac_context_t *hmac_ctx,
@@ -307,6 +318,7 @@ void dtls_mac(dtls_hmac_context_t *hmac_ctx,
               unsigned char *buf)
 {
     uint16 L;
+
     dtls_int_to_uint16(L, length);
 
     assert(hmac_ctx);
@@ -325,6 +337,7 @@ dtls_ccm_encrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src, size_t srclen,
                  const unsigned char *aad, size_t la)
 {
     long int len;
+
     (void)src;
 
     assert(ccm_ctx);
@@ -345,6 +358,7 @@ dtls_ccm_decrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src,
                  const unsigned char *aad, size_t la)
 {
     long int len;
+
     (void)src;
 
     assert(ccm_ctx);
@@ -364,8 +378,7 @@ int dtls_psk_pre_master_secret(unsigned char *key, size_t keylen,
 {
     unsigned char *p = result;
 
-    if (result_len < (2 * (sizeof(uint16) + keylen)))
-    {
+    if (result_len < (2 * (sizeof(uint16) + keylen))) {
         return -1;
     }
 
@@ -390,8 +403,7 @@ static void dtls_ec_key_to_uint32(const unsigned char *key, size_t key_size,
 {
     int i;
 
-    for (i = (key_size / sizeof(uint32_t)) - 1; i >= 0; i--)
-    {
+    for (i = (key_size / sizeof(uint32_t)) - 1; i >= 0; i--) {
         *result = dtls_uint32_to_int(&key[i * sizeof(uint32_t)]);
         result++;
     }
@@ -402,8 +414,7 @@ static void dtls_ec_key_from_uint32(const uint32_t *key, size_t key_size,
 {
     int i;
 
-    for (i = (key_size / sizeof(uint32_t)) - 1; i >= 0; i--)
-    {
+    for (i = (key_size / sizeof(uint32_t)) - 1; i >= 0; i--) {
         dtls_int_to_uint32(result, key[i]);
         result += 4;
     }
@@ -435,18 +446,15 @@ int dtls_ec_key_asn1_from_uint32(const uint32_t *key, size_t key_size,
     dtls_ec_key_from_uint32(key, key_size, buf);
 
     /* skip leading 0's */
-    while (i < (int)key_size && buf[i] == 0)
-    {
+    while (i < (int)key_size && buf[i] == 0) {
         ++i;
     }
     assert(i != (int)key_size);
-    if (i == (int)key_size)
-    {
+    if (i == (int)key_size) {
         dtls_alert("ec key is all zero\n");
         return 0;
     }
-    if (buf[i] >= 0x80)
-    {
+    if (buf[i] >= 0x80) {
         /*
          * Preserve unsigned by adding leading 0 (i may go negative which is
          * explicitely handled below with the assumption that buf is at least 33
@@ -454,14 +462,12 @@ int dtls_ec_key_asn1_from_uint32(const uint32_t *key, size_t key_size,
          */
         --i;
     }
-    if (i > 0)
-    {
+    if (i > 0) {
         /* remove leading 0's */
         key_size -= i;
         memmove(buf, buf + i, key_size);
     }
-    else if (i == -1)
-    {
+    else if (i == -1) {
         /* add leading 0 */
         memmove(buf + 1, buf, key_size);
         buf[0] = 0;
@@ -480,19 +486,16 @@ int dtls_ecdh_pre_master_secret(unsigned char *priv_key,
                                 size_t result_len)
 {
 #ifdef DTLS_FIDO
-    if (result_len < key_size)
-    {
+    if (result_len < key_size) {
         return -1;
     }
 
     ctap_crypto_pub_key_t key;
     memcpy(key.x, pub_key_x, key_size);
     memcpy(key.y, pub_key_y, key_size);
-    int ret = fido2_ctap_crypto_ecdh(result, key_size, &key, priv_key,
-                                     key_size);
+    int ret = fido2_ctap_crypto_ecdh(result, key_size, &key, priv_key, key_size);
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
         return -1;
     }
 
@@ -504,8 +507,7 @@ int dtls_ecdh_pre_master_secret(unsigned char *priv_key,
     uint32_t result_x[8];
     uint32_t result_y[8];
 
-    if (result_len < key_size)
-    {
+    if (result_len < key_size) {
         return -1;
     }
 
@@ -525,12 +527,17 @@ void dtls_ecdsa_generate_key(unsigned char *priv_key,
                              unsigned char *pub_key_y,
                              size_t key_size)
 {
+#ifdef DTLS_FIDO
+    ctap_crypto_pub_key_t pk;
+    fido2_ctap_crypto_gen_keypair(&pk, priv_key, key_size);
+    memcpy(pub_key_x, pk.x, key_size);
+    memcpy(pub_key_y, pk.y, key_size);
+#else
     uint32_t priv[8];
     uint32_t pub_x[8];
     uint32_t pub_y[8];
 
-    do
-    {
+    do{
         dtls_prng((unsigned char *)priv, key_size);
     } while (!ecc_is_valid_key(priv));
 
@@ -539,6 +546,7 @@ void dtls_ecdsa_generate_key(unsigned char *priv_key,
     dtls_ec_key_from_uint32(priv, key_size, priv_key);
     dtls_ec_key_from_uint32(pub_x, key_size, pub_key_x);
     dtls_ec_key_from_uint32(pub_y, key_size, pub_key_y);
+#endif
 }
 
 /* rfc4492#section-5.4 */
@@ -547,17 +555,28 @@ void dtls_ecdsa_create_sig_hash(const unsigned char *priv_key, size_t key_size,
                                 uint32_t point_r[9], uint32_t point_s[9])
 {
     int ret;
+
+    (void)ret;
+
+#ifdef DTLS_FIDO
+    uint8_t sig[64];
+    ret = fido2_ctap_crypto_get_sig_raw((uint8_t *)sign_hash, sign_hash_size, sig, priv_key,
+                                        key_size);
+
+    memcpy(sig, point_r, CTAP_CRYPTO_KEY_SIZE);
+    memcpy(sig + CTAP_CRYPTO_KEY_SIZE, point_s, CTAP_CRYPTO_KEY_SIZE);
+#else
     uint32_t priv[8];
     uint32_t hash[8];
     uint32_t randv[8];
 
     dtls_ec_key_to_uint32(priv_key, key_size, priv);
     dtls_ec_key_to_uint32(sign_hash, sign_hash_size, hash);
-    do
-    {
+    do{
         dtls_prng((unsigned char *)randv, key_size);
         ret = ecc_ecdsa_sign(priv, hash, randv, point_r, point_s);
     } while (ret);
+#endif
 }
 
 void dtls_ecdsa_create_sig(const unsigned char *priv_key, size_t key_size,
@@ -567,6 +586,7 @@ void dtls_ecdsa_create_sig(const unsigned char *priv_key, size_t key_size,
                            uint32_t point_r[9], uint32_t point_s[9])
 {
     unsigned char sha256hash[DTLS_HMAC_DIGEST_SIZE];
+
 #ifdef DTLS_FIDO
     uint8_t sig[64];
     sha256_context_t ctx;
@@ -575,8 +595,8 @@ void dtls_ecdsa_create_sig(const unsigned char *priv_key, size_t key_size,
     fido2_ctap_crypto_sha256_update(&ctx, server_random, server_random_size);
     fido2_ctap_crypto_sha256_update(&ctx, keyx_params, keyx_params_size);
     fido2_ctap_crypto_sha256_final(&ctx, sha256hash);
-    fido2_ctap_crypto_get_sig_raw(sha256hash, sizeof(sha256hash), sig,
-                                  priv_key, key_size);
+    int ret = fido2_ctap_crypto_get_sig_raw(sha256hash, sizeof(sha256hash), sig,
+                                            priv_key, key_size);
 
     memcpy(point_r, sig, 32);
     memcpy(point_s, sig + 32, 32);
@@ -599,6 +619,20 @@ int dtls_ecdsa_verify_sig_hash(const unsigned char *pub_key_x,
                                const unsigned char *sign_hash, size_t sign_hash_size,
                                unsigned char *result_r, unsigned char *result_s)
 {
+
+#ifdef DTLS_FIDO
+    (void)key_size;
+    (void)dtls_ec_key_to_uint32;
+    uint8_t sig[64];
+    memcpy(sig, result_r, CTAP_CRYPTO_KEY_SIZE);
+    memcpy(sig + CTAP_CRYPTO_KEY_SIZE, result_s, CTAP_CRYPTO_KEY_SIZE);
+
+    ctap_crypto_pub_key_t pk;
+    memcpy(pk.x, pub_key_x, CTAP_CRYPTO_KEY_SIZE);
+    memcpy(pk.y, pub_key_y, CTAP_CRYPTO_KEY_SIZE);
+
+    return fido2_ctap_crypto_vrfy_sig(&pk, sign_hash, sign_hash_size, sig);
+#else
     uint32_t pub_x[8];
     uint32_t pub_y[8];
     uint32_t hash[8];
@@ -612,6 +646,7 @@ int dtls_ecdsa_verify_sig_hash(const unsigned char *pub_key_x,
     dtls_ec_key_to_uint32(sign_hash, sign_hash_size, hash);
 
     return ecc_ecdsa_validate(pub_x, pub_y, hash, point_r, point_s);
+#endif
 }
 
 int dtls_ecdsa_verify_sig(const unsigned char *pub_key_x,
@@ -621,15 +656,23 @@ int dtls_ecdsa_verify_sig(const unsigned char *pub_key_x,
                           const unsigned char *keyx_params, size_t keyx_params_size,
                           unsigned char *result_r, unsigned char *result_s)
 {
-    dtls_hash_ctx data;
     unsigned char sha256hash[DTLS_HMAC_DIGEST_SIZE];
 
+#ifdef DTLS_FIDO
+    sha256_context_t ctx;
+    fido2_ctap_crypto_sha256_init(&ctx);
+    fido2_ctap_crypto_sha256_update(&ctx, client_random, client_random_size);
+    fido2_ctap_crypto_sha256_update(&ctx, server_random, server_random_size);
+    fido2_ctap_crypto_sha256_update(&ctx, keyx_params, keyx_params_size);
+    fido2_ctap_crypto_sha256_final(&ctx, sha256hash);
+#else
+    dtls_hash_ctx data;
     dtls_hash_init(&data);
     dtls_hash_update(&data, client_random, client_random_size);
     dtls_hash_update(&data, server_random, server_random_size);
     dtls_hash_update(&data, keyx_params, keyx_params_size);
     dtls_hash_finalize(sha256hash, &data);
-
+#endif
     return dtls_ecdsa_verify_sig_hash(pub_key_x, pub_key_y, key_size, sha256hash,
                                       sizeof(sha256hash), result_r, result_s);
 }
@@ -641,26 +684,32 @@ int dtls_encrypt_params(const dtls_ccm_params_t *params,
                         const unsigned char *key, size_t keylen,
                         const unsigned char *aad, size_t la)
 {
-    int ret;
+#if DTLS_FIDO
+    return fido2_ctap_crypto_aes_ccm_enc(buf, src, length, (uint8_t *)aad, la, params->tag_length,
+                                         params->l,
+                                         params->nonce, 16, key, keylen);
+#else
     struct dtls_cipher_context_t *ctx = dtls_cipher_context_get();
+
     ctx->data.tag_length = params->tag_length;
     ctx->data.l = params->l;
 
-    ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
-    if (ret < 0)
-    {
+    int ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
+    if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
         dtls_warn("cannot set rijndael key\n");
         goto error;
     }
 
-    if (src != buf)
+    if (src != buf) {
         memmove(buf, src, length);
+    }
     ret = dtls_ccm_encrypt(&ctx->data, src, length, buf, params->nonce, aad, la);
 
 error:
     dtls_cipher_context_release();
     return ret;
+#endif
 }
 
 int dtls_encrypt(const unsigned char *src, size_t length,
@@ -671,7 +720,7 @@ int dtls_encrypt(const unsigned char *src, size_t length,
 {
     /* For backwards-compatibility, dtls_encrypt_params is called with
      * M=8 and L=3. */
-    const dtls_ccm_params_t params = {nonce, 8, 3};
+    const dtls_ccm_params_t params = { nonce, 8, 3 };
 
     return dtls_encrypt_params(&params, src, length, buf, key, keylen, aad, la);
 }
@@ -682,26 +731,33 @@ int dtls_decrypt_params(const dtls_ccm_params_t *params,
                         const unsigned char *key, size_t keylen,
                         const unsigned char *aad, size_t la)
 {
+#if DTLS_FIDO
+    return fido2_ctap_crypto_aes_ccm_dec(buf, src, length, (uint8_t *)aad, la, params->tag_length,
+                                         params->l,
+                                         params->nonce, 16, key, keylen);
+#else
     int ret;
     struct dtls_cipher_context_t *ctx = dtls_cipher_context_get();
+
     ctx->data.tag_length = params->tag_length;
     ctx->data.l = params->l;
 
     ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
         dtls_warn("cannot set rijndael key\n");
         goto error;
     }
 
-    if (src != buf)
+    if (src != buf) {
         memmove(buf, src, length);
+    }
     ret = dtls_ccm_decrypt(&ctx->data, src, length, buf, params->nonce, aad, la);
 
 error:
     dtls_cipher_context_release();
     return ret;
+#endif
 }
 
 int dtls_decrypt(const unsigned char *src, size_t length,
@@ -712,7 +768,7 @@ int dtls_decrypt(const unsigned char *src, size_t length,
 {
     /* For backwards-compatibility, dtls_encrypt_params is called with
      * M=8 and L=3. */
-    const dtls_ccm_params_t params = {nonce, 8, 3};
+    const dtls_ccm_params_t params = { nonce, 8, 3 };
 
     return dtls_decrypt_params(&params, src, length, buf, key, keylen, aad, la);
 }

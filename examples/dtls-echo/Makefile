@@ -19,7 +19,13 @@ USEMODULE += sock_udp
 USEMODULE += shell
 USEMODULE += shell_cmds_default
 
-USEPKG += tinydtls
+USB_VID ?= $(USB_VID_TESTING)
+USB_PID ?= $(USB_PID_TESTING)
+
+#USEPKG += tinydtls
+USEPKG += tinydtls2
+USEMODULE += fido2_ctap_transport_hid
+CFLAGS += -DDTLS_FIDO
 # tinydtls needs crypto secure PRNG
 USEMODULE += prng_sha1prng
 
@@ -32,7 +38,9 @@ CFLAGS += -DDTLS_DEFAULT_PORT=$(DTLS_PORT)
 # This adds support for TLS_PSK_WITH_AES_128_CCM_8
 # CFLAGS += -DCONFIG_DTLS_PSK
 # This adds support for TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
-# CFLAGS += -DCONFIG_DTLS_ECC
+CFLAGS += -DCONFIG_DTLS_ECC
+
+CFLAGS += -DDEBUG_ASSERT_VERBOSE=1
 
 # Enable this line for setting tinyDTLS in debug mode.
 # CFLAGS += -DCONFIG_DTLS_DEBUG

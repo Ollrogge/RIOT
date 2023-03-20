@@ -1618,7 +1618,7 @@ int fido2_ctap_encrypt_rk(ctap_resident_key_t *rk, uint8_t *nonce,
         }
     }
 
-    ret = fido2_ctap_crypto_aes_ccm_enc((uint8_t *)id, sizeof(id),
+    ret = fido2_ctap_crypto_aes_ccm_enc((uint8_t *)id,
                                         (uint8_t *)rk,
                                         CTAP_CREDENTIAL_ID_ENC_SIZE,
                                         NULL, 0,
@@ -1627,8 +1627,8 @@ int fido2_ctap_encrypt_rk(ctap_resident_key_t *rk, uint8_t *nonce,
                                         _state.cred_key,
                                         sizeof(_state.cred_key));
 
-    if (ret != CTAP2_OK) {
-        return ret;
+    if (ret < 0) {
+        return CTAP1_ERR_OTHER;
     }
 
     memcpy(id->nonce, nonce, CTAP_AES_CCM_NONCE_SIZE);
@@ -1640,7 +1640,7 @@ static int _ctap_decrypt_rk(ctap_resident_key_t *rk, ctap_cred_id_t *id)
 {
     int ret;
 
-    ret = fido2_ctap_crypto_aes_ccm_dec((uint8_t *)rk, sizeof(*rk),
+    ret = fido2_ctap_crypto_aes_ccm_dec((uint8_t *)rk,
                                         (uint8_t *)id,
                                         sizeof(id->id) + sizeof(id->mac),
                                         NULL, 0,
@@ -1649,8 +1649,8 @@ static int _ctap_decrypt_rk(ctap_resident_key_t *rk, ctap_cred_id_t *id)
                                         _state.cred_key,
                                         sizeof(_state.cred_key));
 
-    if (ret != CTAP2_OK) {
-        return ret;
+    if (ret < 0) {
+        return CTAP1_ERR_OTHER;
     }
 
     /* store nonce in key to be able to later encrypt again */

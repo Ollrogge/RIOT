@@ -31,7 +31,7 @@
 #include "fido2/ctap.h"
 #include "fido2/ctap/ctap_utils.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 /**
@@ -184,7 +184,7 @@ int fido2_ctap_crypto_aes_dec(uint8_t *out, size_t *out_len, uint8_t *in,
     return CTAP2_OK;
 }
 
-int fido2_ctap_crypto_aes_ccm_enc(uint8_t *out, size_t out_len,
+int fido2_ctap_crypto_aes_ccm_enc(uint8_t *out,
                                   const uint8_t *in, size_t in_len,
                                   uint8_t *auth_data, size_t auth_data_len,
                                   uint8_t mac_len, uint8_t length_encoding,
@@ -202,18 +202,12 @@ int fido2_ctap_crypto_aes_ccm_enc(uint8_t *out, size_t out_len,
         return CTAP1_ERR_OTHER;
     }
 
-    ret = cipher_encrypt_ccm(&cipher, auth_data, auth_data_len, mac_len,
-                             length_encoding, nonce, nonce_len,
-                             in, in_len, out);
-
-    if (ret < 0) {
-        return CTAP1_ERR_OTHER;
-    }
-
-    return CTAP2_OK;
+    return cipher_encrypt_ccm(&cipher, auth_data, auth_data_len, mac_len,
+                              length_encoding, nonce, nonce_len,
+                              in, in_len, out);
 }
 
-int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out, size_t out_len,
+int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out,
                                   const uint8_t *in, size_t in_len,
                                   uint8_t *auth_data, size_t auth_data_len,
                                   uint8_t mac_len, uint8_t length_encoding,
@@ -223,7 +217,7 @@ int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out, size_t out_len,
     assert(key_len == CTAP_CRED_KEY_LEN);
 
     cipher_t cipher;
-    int ret, len;
+    int ret;
 
     ret = cipher_init(&cipher, CIPHER_AES, key, key_len);
 
@@ -231,15 +225,9 @@ int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out, size_t out_len,
         return CTAP1_ERR_OTHER;
     }
 
-    len = cipher_decrypt_ccm(&cipher, auth_data, auth_data_len,
-                             mac_len, length_encoding, nonce, nonce_len,
-                             in, in_len, out);
-
-    if (len < 0) {
-        return CTAP1_ERR_OTHER;
-    }
-
-    return CTAP2_OK;
+    return cipher_decrypt_ccm(&cipher, auth_data, auth_data_len,
+                              mac_len, length_encoding, nonce, nonce_len,
+                              in, in_len, out);
 }
 
 int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key,
@@ -258,12 +246,26 @@ int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key,
     return CTAP2_OK;
 }
 
-int fido2_ctap_crypto_get_sig_raw(uint8_t *hash, size_t hash_len, uint8_t *sig, const uint8_t *key, size_t key_len)
+int fido2_ctap_crypto_get_sig_raw(uint8_t *hash, size_t hash_len, uint8_t *sig, const uint8_t *key,
+                                  size_t key_len)
 {
     assert(key_len == CTAP_CRYPTO_KEY_SIZE);
 
     const struct uECC_Curve_t *curve = uECC_secp256r1();
     int ret = uECC_sign(key, hash, hash_len, sig, curve);
+
+    if (ret == 0) {
+        return CTAP1_ERR_OTHER;
+    }
+
+    return CTAP2_OK;
+}
+
+int fido2_ctap_crypto_vrfy_sig(const ctap_crypto_pub_key_t *pk, const uint8_t *hash,
+                               size_t hash_len, const uint8_t *sig)
+{
+    const struct uECC_Curve_t *curve = uECC_secp256r1();
+    int ret = uECC_verify((uint8_t *)pk, hash, hash_len, sig, curve);
 
     if (ret == 0) {
         return CTAP1_ERR_OTHER;

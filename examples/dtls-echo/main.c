@@ -25,6 +25,8 @@
 #include "msg.h"
 
 #include "dtls.h"
+#include "fido2/ctap.h"
+#include "fido2/ctap/transport/ctap_transport.h"
 
 /* TinyDTLS WARNING check */
 #ifdef WITH_RIOT_SOCKETS
@@ -52,6 +54,9 @@ int main(void)
 
     /* TinyDTLS settings (Universal and called only one time by reboot) */
     dtls_init();
+
+    //fido2_ctap_init();
+    fido2_ctap_transport_init();
 
     /* start shell */
     puts("All up, running the shell now");

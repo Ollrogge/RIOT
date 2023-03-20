@@ -28,7 +28,8 @@
 #include "hashes/sha256.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /**
@@ -45,8 +46,8 @@ extern "C" {
  * @brief Elliptic curve public key
  */
 typedef struct {
-    uint8_t x[CTAP_CRYPTO_KEY_SIZE];    /**< x coordinate of curve point */
-    uint8_t y[CTAP_CRYPTO_KEY_SIZE];    /**< y coordinate of curve point */
+    uint8_t x[CTAP_CRYPTO_KEY_SIZE];        /**< x coordinate of curve point */
+    uint8_t y[CTAP_CRYPTO_KEY_SIZE];        /**< y coordinate of curve point */
 } ctap_crypto_pub_key_t;
 
 /**
@@ -55,8 +56,8 @@ typedef struct {
  * CTAP specification (version 20190130) section 5.5.4
  */
 typedef struct {
-    ctap_crypto_pub_key_t pub;          /**< public key */
-    uint8_t priv[CTAP_CRYPTO_KEY_SIZE]; /**< private key */
+    ctap_crypto_pub_key_t pub;              /**< public key */
+    uint8_t priv[CTAP_CRYPTO_KEY_SIZE];     /**< private key */
 } ctap_crypto_key_agreement_key_t;
 
 /**
@@ -200,8 +201,11 @@ int fido2_ctap_crypto_gen_keypair(ctap_crypto_pub_key_t *pub_key, uint8_t *priv_
 int fido2_ctap_crypto_ecdh(uint8_t *out, size_t len,
                            ctap_crypto_pub_key_t *pub_key, uint8_t *priv_key, size_t key_len);
 
+int fido2_ctap_crypto_get_sig_raw(uint8_t *hash, size_t hash_len, uint8_t *sig, const uint8_t *key,
+                                  size_t key_len);
 
-int fido2_ctap_crypto_get_sig_raw(uint8_t *hash, size_t hash_len, uint8_t *sig, const uint8_t *key, size_t key_len);
+int fido2_ctap_crypto_vrfy_sig(const ctap_crypto_pub_key_t *pk, const uint8_t *hash,
+                               size_t hash_len, const uint8_t *sig);
 
 /**
  * @brief Create cryptographic signature
@@ -230,8 +234,8 @@ int fido2_ctap_crypto_get_sig(uint8_t *hash, size_t hash_len, uint8_t *sig,
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_crypto_aes_enc(uint8_t * out, size_t *out_len, uint8_t * in,
-                              size_t in_len, const uint8_t * key, size_t key_len);
+int fido2_ctap_crypto_aes_enc(uint8_t *out, size_t *out_len, uint8_t *in,
+                              size_t in_len, const uint8_t *key, size_t key_len);
 
 /**
  * @brief Decrypt data using AES-256-CBC
@@ -245,8 +249,8 @@ int fido2_ctap_crypto_aes_enc(uint8_t * out, size_t *out_len, uint8_t * in,
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_crypto_aes_dec(uint8_t * out, size_t *out_len, uint8_t * in,
-                              size_t in_len, const uint8_t * key, size_t key_len);
+int fido2_ctap_crypto_aes_dec(uint8_t *out, size_t *out_len, uint8_t *in,
+                              size_t in_len, const uint8_t *key, size_t key_len);
 
 /**
  * @brief Encrypt data using AES-128-CCM
@@ -266,7 +270,7 @@ int fido2_ctap_crypto_aes_dec(uint8_t * out, size_t *out_len, uint8_t * in,
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_crypto_aes_ccm_enc(uint8_t *out, size_t out_len,
+int fido2_ctap_crypto_aes_ccm_enc(uint8_t *out,
                                   const uint8_t *in, size_t in_len,
                                   uint8_t *auth_data, size_t auth_data_len,
                                   uint8_t mac_len, uint8_t length_encoding,
@@ -291,7 +295,7 @@ int fido2_ctap_crypto_aes_ccm_enc(uint8_t *out, size_t out_len,
  *
  * @return @ref ctap_status_codes_t
  */
-int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out, size_t out_len,
+int fido2_ctap_crypto_aes_ccm_dec(uint8_t *out,
                                   const uint8_t *in, size_t in_len,
                                   uint8_t *auth_data, size_t auth_data_len,
                                   uint8_t mac_len, uint8_t length_encoding,

@@ -34,8 +34,11 @@
 #include "tinydtls_common.h"
 #include "tinydtls_keys.h"
 
+#define ENABLE_DEBUG (1)
+#include "debug.h"
+
 #ifndef CLIENT_SEND_TIMEOUT
-  /* timeout for client_send command */
+/* timeout for client_send command */
 #define CLIENT_SEND_TIMEOUT  (1U * US_PER_SEC)
 #endif
 
@@ -102,6 +105,7 @@ static void _close_sock(sock_dtls_t *sock)
 static void _timeout_handler(event_t *ev)
 {
     tinydtls_sock_event_t *event = (tinydtls_sock_event_t *)ev;
+
     puts("Session handshake timed out");
     _close_sock(event->sock);
 }
@@ -147,7 +151,8 @@ static void _dtls_handler(sock_dtls_t *sock, sock_async_flags_t type, void *arg)
             sock_dtls_session_get_udp_ep(&session, &ep);
             sock_udp_ep_fmt(&ep, addrstr, &port);
             printf("Session became ready: [%s]:%u\n", addrstr, port);
-        } else {
+        }
+        else {
             puts("A session became ready, but the corresponding " \
                  "session could not be retrieved from socket");
         }
@@ -182,6 +187,7 @@ static int client_send(char *addr_str, char *data)
     sock_dtls_session_t session;
     sock_udp_ep_t remote = SOCK_IPV6_EP_ANY;
     sock_udp_ep_t local = SOCK_IPV6_EP_ANY;
+
     local.port = 12345;
     remote.port = DTLS_DEFAULT_PORT;
 
@@ -190,7 +196,8 @@ static int client_send(char *addr_str, char *data)
     }
     event_timeout_init(&_timeouter, EVENT_PRIO_MEDIUM, &_timeout.super);
     /* get interface */
-    char* iface = ipv6_addr_split_iface(addr_str);
+    char *iface = ipv6_addr_split_iface(addr_str);
+
     if (iface) {
         int pid = atoi(iface);
         if (gnrc_netif_get_by_pid(pid) == NULL) {
@@ -198,10 +205,12 @@ static int client_send(char *addr_str, char *data)
             return -1;
         }
         remote.netif = pid;
-    } else if (gnrc_netif_numof() == 1) {
+    }
+    else if (gnrc_netif_numof() == 1) {
         /* assign the single interface found in gnrc_netif_numof() */
         remote.netif = gnrc_netif_iter(NULL)->pid;
-    } else {
+    }
+    else {
         /* no interface is given, or given interface is invalid */
         /* FIXME This probably is not valid with multiple interfaces */
         remote.netif = SOCK_ADDR_ANY_NETIF;

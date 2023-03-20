@@ -34,7 +34,7 @@
 #include "dtls_debug.h"
 #include "dtls.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 #ifndef DTLS_DEFAULT_PORT
@@ -59,9 +59,9 @@ static int _events_handler(struct dtls_context_t *ctx,
                            dtls_alert_level_t level,
                            unsigned short code)
 {
-    (void) ctx;
-    (void) session;
-    (void) level;
+    (void)ctx;
+    (void)session;
+    (void)level;
 
     if (code == DTLS_EVENT_CONNECTED) {
         dtls_connected = 1;
@@ -102,6 +102,7 @@ static int dtls_handle_read(dtls_context_t *ctx)
     }
 
     sock_udp_t *sock;
+
     sock =  (sock_udp_t *)dtls_get_app_data(ctx);
 
     if (sock_udp_get_remote(sock, &remote) == -ENOTCONN) {
@@ -157,36 +158,36 @@ static int _peer_get_psk_info_handler(struct dtls_context_t *ctx,
                                       const unsigned char *id, size_t id_len,
                                       unsigned char *result, size_t result_length)
 {
-    (void) ctx;
-    (void) session;
+    (void)ctx;
+    (void)session;
 
     switch (type) {
-        case DTLS_PSK_IDENTITY:
-            if (id_len) {
-                dtls_debug("got psk_identity_hint: '%.*s'\n", (int)id_len, id);
-            }
+    case DTLS_PSK_IDENTITY:
+        if (id_len) {
+            dtls_debug("got psk_identity_hint: '%.*s'\n", (int)id_len, id);
+        }
 
-            if (result_length < psk_id_length) {
-                dtls_warn("cannot set psk_identity -- buffer too small\n");
-                return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
-            }
+        if (result_length < psk_id_length) {
+            dtls_warn("cannot set psk_identity -- buffer too small\n");
+            return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
+        }
 
-            memcpy(result, psk_id, psk_id_length);
-            return psk_id_length;
-        case DTLS_PSK_KEY:
-            if (id_len != psk_id_length || memcmp(psk_id, id, id_len) != 0) {
-                dtls_warn("PSK for unknown id requested, exiting\n");
-                return dtls_alert_fatal_create(DTLS_ALERT_ILLEGAL_PARAMETER);
-            }
-            else if (result_length < psk_key_length) {
-                dtls_warn("cannot set psk -- buffer too small\n");
-                return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
-            }
+        memcpy(result, psk_id, psk_id_length);
+        return psk_id_length;
+    case DTLS_PSK_KEY:
+        if (id_len != psk_id_length || memcmp(psk_id, id, id_len) != 0) {
+            dtls_warn("PSK for unknown id requested, exiting\n");
+            return dtls_alert_fatal_create(DTLS_ALERT_ILLEGAL_PARAMETER);
+        }
+        else if (result_length < psk_key_length) {
+            dtls_warn("cannot set psk -- buffer too small\n");
+            return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
+        }
 
-            memcpy(result, psk_key, psk_key_length);
-            return psk_key_length;
-        default:
-            dtls_warn("unsupported request type: %d\n", type);
+        memcpy(result, psk_key, psk_key_length);
+        return psk_key_length;
+    default:
+        dtls_warn("unsupported request type: %d\n", type);
     }
 
     return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
@@ -198,8 +199,8 @@ static int _peer_get_ecdsa_key_handler(struct dtls_context_t *ctx,
                                        const session_t *session,
                                        const dtls_ecdsa_key_t **result)
 {
-    (void) ctx;
-    (void) session;
+    (void)ctx;
+    (void)session;
 
     /* TODO: Load the key from external source */
 
@@ -220,11 +221,11 @@ static int _peer_verify_ecdsa_key_handler(struct dtls_context_t *ctx,
                                           const unsigned char *other_pub_y,
                                           size_t key_size)
 {
-    (void) ctx;
-    (void) session;
-    (void) other_pub_y;
-    (void) other_pub_x;
-    (void) key_size;
+    (void)ctx;
+    (void)session;
+    (void)other_pub_y;
+    (void)other_pub_x;
+    (void)key_size;
 
     /* TODO: As far for tinyDTLS 0.8.2 this is not used */
 
@@ -237,12 +238,13 @@ static int _read_from_peer_handler(struct dtls_context_t *ctx,
                                    session_t *session,
                                    uint8 *data, size_t len)
 {
-    (void) ctx;
-    (void) session;
+    (void)ctx;
+    (void)session;
 
     printf("Client: got DTLS Data App -- ");
-    for (size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++) {
         printf("%c", data[i]);
+    }
     puts(" --");
 
     /*
@@ -277,7 +279,7 @@ ssize_t try_send(struct dtls_context_t *ctx, session_t *dst, uint8 *buf, size_t 
 static int _send_to_peer_handler(struct dtls_context_t *ctx,
                                  session_t *session, uint8 *buf, size_t len)
 {
-    (void) session;
+    (void)session;
 
     assert(ctx);
     assert(dtls_get_app_data(ctx));
@@ -328,8 +330,8 @@ dtls_context_t *_init_dtls(sock_udp_t *sock, sock_udp_ep_t *local,
     dtls_session_init(dst);
 
     /* First, we prepare the UDP Sock */
-    local->port = (unsigned short) CLIENT_PORT;
-    remote->port = (unsigned short) DTLS_DEFAULT_PORT;
+    local->port = (unsigned short)CLIENT_PORT;
+    remote->port = (unsigned short)DTLS_DEFAULT_PORT;
 
     /* Parsing <address>[:<iface>]:Port */
     char *iface = ipv6_addr_split_iface(addr_str);
@@ -392,12 +394,14 @@ static void client_send(char *addr_str, char *data)
 
     dtls_context_t *dtls_context = _init_dtls(&sock, &local, &remote, &dst,
                                               addr_str);
+
     if (!dtls_context) {
         puts("ERROR: Client unable to load context!");
         return;
     }
 
     char *client_payload;
+
     if (strlen(data) > DTLS_MAX_BUF) {
         puts("ERROR: Exceeded max size of DTLS buffer.");
         return;
