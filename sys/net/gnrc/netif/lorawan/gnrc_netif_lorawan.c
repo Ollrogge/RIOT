@@ -30,7 +30,7 @@
 #include "net/gnrc/lorawan/region.h"
 #include "net/gnrc/netreg.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 #define MSG_TYPE_MLME_BACKOFF_EXPIRE (0x3458)           /**< Backoff timer expiration message type */
@@ -576,17 +576,36 @@ static int _set(gnrc_netif_t *netif, const gnrc_netapi_opt_t *opt)
         netopt_enable_t en = *((netopt_enable_t *)opt->data);
         if (en) {
             if (netif->lorawan.otaa) {
-                mlme_request.type = MLME_JOIN;
-                mlme_request.join.deveui = netif->lorawan.deveui;
-                mlme_request.join.joineui = netif->lorawan.joineui;
-                mlme_request.join.nwkkey = netif->lorawan.nwkkey;
+                uint8_t type = *(uint8_t *)opt->data;
+                if (type > 1 && IS_USED(MODULE_GNRC_LORAWAN_1_1)) {
+                    type &= 0b11;
 
-                if (IS_USED(MODULE_GNRC_LORAWAN_1_1)) {
-                    gnrc_lorawan_mlme_join_set_appkey(&mlme_request.join, gnrc_netif_lorawan_get_appkey(
-                                                          &netif->lorawan));
+                    mlme_join_req_type_t rj_type = (mlme_join_req_type_t)type;
+
+                    if (rj_type != REJOIN_REQ_0 && rj_type != REJOIN_REQ_1 &&
+                        rj_type != REJOIN_REQ_2) {
+                        res = -EINVAL;
+                    }
+
+                    mlme_request.type = MLME_REJOIN;
+                    mlme_request.rejoin.deveui = netif->lorawan.deveui;
+                    mlme_request.rejoin.joineui = netif->lorawan.joineui;
+                    mlme_request.rejoin.type = rj_type;
                 }
+                else {
+                    mlme_request.type = MLME_JOIN;
+                    mlme_request.join.deveui = netif->lorawan.deveui;
+                    mlme_request.join.joineui = netif->lorawan.joineui;
+                    mlme_request.join.nwkkey = netif->lorawan.nwkkey;
 
-                mlme_request.join.dr = netif->lorawan.datarate;
+                    if (IS_USED(MODULE_GNRC_LORAWAN_1_1)) {
+                        gnrc_lorawan_mlme_join_set_appkey(&mlme_request.join, gnrc_netif_lorawan_get_appkey(
+                                                              &netif->lorawan));
+                    }
+
+                    mlme_request.join.dr = netif->lorawan.datarate;
+
+                }
                 gnrc_lorawan_mlme_request(&netif->lorawan.mac,
                                           &mlme_request, &mlme_confirm);
             }

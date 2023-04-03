@@ -77,6 +77,7 @@ typedef enum {
  */
 typedef enum {
     MLME_JOIN,                  /**< join a LoRaWAN network */
+    MLME_REJOIN,                /**< rejoin LoRaWAN network */
     MLME_LINK_CHECK,            /**< perform a Link Check */
     MLME_RESET,                 /**< reset the MAC layer */
     MLME_SET,                   /**< set the MIB */
@@ -109,10 +110,11 @@ typedef struct {
  */
 typedef struct {
     union {
-        mlme_lorawan_join_t join;   /**< Join Data holder */
-        mlme_mib_t mib;             /**< MIB holder */
+        mlme_lorawan_join_t join;       /**< Join Data holder */
+        mlme_lorawan_rejoin_t rejoin;   /**< ReJoin Data holder */
+        mlme_mib_t mib;                 /**< MIB holder */
     };
-    mlme_type_t type;               /**< type of the MLME request */
+    mlme_type_t type;                   /**< type of the MLME request */
 } mlme_request_t;
 
 /**

@@ -83,7 +83,7 @@ static void _sleep_radio(gnrc_lorawan_t *mac)
 
 static void _load_persistent_state(gnrc_lorawan_t *mac)
 {
-    (void) mac;
+    (void)mac;
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
     void *addr = flashpage_addr(GNRC_LORAWAN_STATE_FLASHPAGE_NUM);
     gnrc_lorawan_persistent_state_t state = { 0 };
@@ -97,8 +97,8 @@ static void _load_persistent_state(gnrc_lorawan_t *mac)
         flashpage_erase(GNRC_LORAWAN_STATE_FLASHPAGE_NUM);
         /* ensure written length is multiple of FLASHPAGE_WRITE_BLOCK_SIZE */
         flashpage_write(addr, &state, (sizeof(state) /
-                                           FLASHPAGE_WRITE_BLOCK_SIZE + 0x1) *
-                            FLASHPAGE_WRITE_BLOCK_SIZE);
+                                       FLASHPAGE_WRITE_BLOCK_SIZE + 0x1) *
+                        FLASHPAGE_WRITE_BLOCK_SIZE);
     }
     memcpy(mac->mlme.dev_nonce, state.dev_nonce, sizeof(mac->mlme.dev_nonce));
 #endif
@@ -139,6 +139,10 @@ void gnrc_lorawan_reset(gnrc_lorawan_t *mac)
 
     gnrc_lorawan_set_rx2_dr(mac, CONFIG_LORAMAC_DEFAULT_RX2_DR);
 
+    if (IS_USED(MODULE_GNRC_LORAWAN_1_1)) {
+        gnrc_lorawan_set_rj_count0(mac, 0);
+    }
+
     mac->toa = 0;
     gnrc_lorawan_mcps_reset(mac);
     gnrc_lorawan_mlme_reset(mac);
@@ -147,7 +151,7 @@ void gnrc_lorawan_reset(gnrc_lorawan_t *mac)
 
 void gnrc_lorawan_store_dev_nonce(uint8_t *dev_nonce)
 {
-    (void) dev_nonce;
+    (void)dev_nonce;
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
     void *addr = flashpage_addr(GNRC_LORAWAN_STATE_FLASHPAGE_NUM);
     gnrc_lorawan_persistent_state_t state = { 0 };
@@ -158,7 +162,7 @@ void gnrc_lorawan_store_dev_nonce(uint8_t *dev_nonce)
     flashpage_erase(GNRC_LORAWAN_STATE_FLASHPAGE_NUM);
     /* ensure written length is multiple of FLASHPAGE_WRITE_BLOCK_SIZE */
     flashpage_write(addr, &state, (sizeof(state) /
-                    FLASHPAGE_WRITE_BLOCK_SIZE + 0x1) *
+                                   FLASHPAGE_WRITE_BLOCK_SIZE + 0x1) *
                     FLASHPAGE_WRITE_BLOCK_SIZE);
 #endif
 }

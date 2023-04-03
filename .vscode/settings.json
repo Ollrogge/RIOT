@@ -7,7 +7,14 @@
     "files.insertFinalNewline": true,
     "files.associations": {
         "Makefile.*": "makefile",
-        "*.mk": "makefile"
+        "*.mk": "makefile",
+        "hdr.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "lorawan.h": "c",
+        "internal.h": "c",
+        "loramac.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,
@@ -17,4 +24,5 @@
         "editor.tabSize": 2,
         "editor.insertSpaces": true,
     },
+    "cmake.sourceDirectory": "${workspaceFolder}/build/pkg/elf2uf2",
 }

@@ -13,9 +13,9 @@ USEMODULE += netdev_default
 USEMODULE += auto_init_gnrc_netif
 
 # Add support for GNRC LoRaWAN
-USEMODULE += gnrc_lorawan
+#USEMODULE += gnrc_lorawan
 # Add support for GNRC LoRaWAN 1.1
-# USEMODULE += gnrc_lorawan_1_1
+USEMODULE += gnrc_lorawan_1_1
 
 # Use GNRC pktdump to print downlink messages
 USEMODULE += gnrc_pktdump
@@ -28,7 +28,7 @@ USEMODULE += shell_cmds_default
 USEMODULE += gnrc_txtsnd
 
 # Uncomment as needed if a board doesn't include a LoRa radio by default
-# USEMODULE += sx1272
+USEMODULE += sx1272
 # USEMODULE += sx1276
 
 # As there is an 'app.config' we want to explicitly disable Kconfig by setting

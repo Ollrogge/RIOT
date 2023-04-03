@@ -195,68 +195,68 @@ static void _set_usage(char *cmd_name)
 {
     printf("usage: %s <if_id> set <key> <value>\n", cmd_name);
     printf("      Sets an hardware specific specific value\n"
-         "      <key> may be one of the following\n"
-         "       * \"addr\" - sets (short) address\n"
-         "       * \"addr_long\" - sets long address\n"
-         "       * \"addr_short\" - alias for \"addr\"\n"
-         "       * \"cca_threshold\" - set ED threshold during CCA in dBm\n"
-         "       * \"freq\" - sets the \"channel\" center frequency\n"
-         "       * \"channel\" - sets the frequency channel\n"
-         "       * \"chan\" - alias for \"channel\"\n"
-         "       * \"checksum\" - set checksumming on-off\n"
-         "       * \"csma_retries\" - set max. number of channel access attempts\n"
-         "       * \"encrypt\" - set the encryption on-off\n"
-         "       * \"hop_limit\" - set hop limit\n"
-         "       * \"hl\" - alias for \"hop_limit\"\n"
-         "       * \"key\" - set the encryption key in hexadecimal format\n"
-         "       * \"mtu\" - IPv6 maximum transition unit\n"
-         "       * \"nid\" - sets the network identifier (or the PAN ID)\n"
-         "       * \"page\" - set the channel page (IEEE 802.15.4)\n"
-         "       * \"pan\" - alias for \"nid\"\n"
-         "       * \"pan_id\" - alias for \"nid\"\n"
-         "       * \"phy_busy\" - set busy mode on-off\n"
+           "      <key> may be one of the following\n"
+           "       * \"addr\" - sets (short) address\n"
+           "       * \"addr_long\" - sets long address\n"
+           "       * \"addr_short\" - alias for \"addr\"\n"
+           "       * \"cca_threshold\" - set ED threshold during CCA in dBm\n"
+           "       * \"freq\" - sets the \"channel\" center frequency\n"
+           "       * \"channel\" - sets the frequency channel\n"
+           "       * \"chan\" - alias for \"channel\"\n"
+           "       * \"checksum\" - set checksumming on-off\n"
+           "       * \"csma_retries\" - set max. number of channel access attempts\n"
+           "       * \"encrypt\" - set the encryption on-off\n"
+           "       * \"hop_limit\" - set hop limit\n"
+           "       * \"hl\" - alias for \"hop_limit\"\n"
+           "       * \"key\" - set the encryption key in hexadecimal format\n"
+           "       * \"mtu\" - IPv6 maximum transition unit\n"
+           "       * \"nid\" - sets the network identifier (or the PAN ID)\n"
+           "       * \"page\" - set the channel page (IEEE 802.15.4)\n"
+           "       * \"pan\" - alias for \"nid\"\n"
+           "       * \"pan_id\" - alias for \"nid\"\n"
+           "       * \"phy_busy\" - set busy mode on-off\n"
 #if IS_USED(MODULE_SHELL_CMD_GNRC_NETIF_LORAWAN)
-         "       * \"bw\" - alias for channel bandwidth\n"
-         "       * \"sf\" - alias for spreading factor\n"
-         "       * \"cr\" - alias for coding rate\n"
-         "       * \"appkey\" - sets Application key\n"
-         "       * \"appskey\" - sets Application session key\n"
+           "       * \"bw\" - alias for channel bandwidth\n"
+           "       * \"sf\" - alias for spreading factor\n"
+           "       * \"cr\" - alias for coding rate\n"
+           "       * \"appkey\" - sets Application key\n"
+           "       * \"appskey\" - sets Application session key\n"
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
-         "       * \"joineui\" - sets Join EUI\n"
-         "       * \"nwkkey\"  - sets Network key\n"
-         "       * \"nwksenckey\" - sets Network session encryption key\n"
-         "       * \"snwksintkey\" - sets Serving network session integrity key\n"
-         "       * \"fnwksintkey\" - sets Forwarding network session integrity key\n"
+           "       * \"joineui\" - sets Join EUI\n"
+           "       * \"nwkkey\"  - sets Network key\n"
+           "       * \"nwksenckey\" - sets Network session encryption key\n"
+           "       * \"snwksintkey\" - sets Serving network session integrity key\n"
+           "       * \"fnwksintkey\" - sets Forwarding network session integrity key\n"
 #else
-         "       * \"appeui\" - sets Application EUI\n"
-         "       * \"nwkskey\" - sets Network Session Key\n"
+           "       * \"appeui\" - sets Application EUI\n"
+           "       * \"nwkskey\" - sets Network Session Key\n"
 #endif
-         "       * \"deveui\" - sets Device EUI\n"
-         "       * \"dr\" - sets datarate\n"
-         "       * \"rx2_dr\" - sets datarate of RX2 (lorawan)\n"
+           "       * \"deveui\" - sets Device EUI\n"
+           "       * \"dr\" - sets datarate\n"
+           "       * \"rx2_dr\" - sets datarate of RX2 (lorawan)\n"
 #endif
 #ifdef MODULE_NETDEV_IEEE802154_MULTIMODE
-         "       * \"phy_mode\" - select PHY mode\n"
+           "       * \"phy_mode\" - select PHY mode\n"
 #endif
 #ifdef MODULE_NETDEV_IEEE802154_MR_OQPSK
-         "       * \"chip_rate\" - BPSK/QPSK chip rate in kChip/s\n"
-         "       * \"rate_mode\" - BPSK/QPSK rate mode\n"
+           "       * \"chip_rate\" - BPSK/QPSK chip rate in kChip/s\n"
+           "       * \"rate_mode\" - BPSK/QPSK rate mode\n"
 #endif
 #ifdef MODULE_NETDEV_IEEE802154_MR_OFDM
-         "       * \"option\" - OFDM option\n"
-         "       * \"scheme\" - OFDM modulation & coding scheme\n"
+           "       * \"option\" - OFDM option\n"
+           "       * \"scheme\" - OFDM modulation & coding scheme\n"
 #endif
 #ifdef MODULE_NETDEV_IEEE802154_MR_FSK
-         "       * \"modulation_index\" - FSK modulation index\n"
-         "       * \"modulation_order\" - FSK modulation order\n"
-         "       * \"symbol_rate\" - FSK symbol rate\n"
-         "       * \"fec\" - FSK forward error correction\n"
-         "       * \"channel_spacing\" - channel spacing\n"
+           "       * \"modulation_index\" - FSK modulation index\n"
+           "       * \"modulation_order\" - FSK modulation order\n"
+           "       * \"symbol_rate\" - FSK symbol rate\n"
+           "       * \"fec\" - FSK forward error correction\n"
+           "       * \"channel_spacing\" - channel spacing\n"
 #endif
-         "       * \"power\" - TX power in dBm\n"
-         "       * \"retrans\" - max. number of retransmissions\n"
-         "       * \"src_len\" - sets the source address length in byte\n"
-         "       * \"state\" - set the device state\n");
+           "       * \"power\" - TX power in dBm\n"
+           "       * \"retrans\" - max. number of retransmissions\n"
+           "       * \"src_len\" - sets the source address length in byte\n"
+           "       * \"state\" - set the device state\n");
 }
 
 static void _flag_usage(char *cmd_name)
@@ -1899,7 +1899,19 @@ int _gnrc_netif_config(int argc, char **argv)
             return _netif_set(argv[0], iface, argv[3], argv[4]);
         }
         else if (strcmp(argv[2], "up") == 0) {
-            return _netif_link(iface, NETOPT_ENABLE);
+            if (argc == 4) {
+                int rejoin_type = atoi(argv[3]);
+
+                if (!fmt_is_digit(*argv[3]) || rejoin_type > 2) {
+                    printf("Invalid rejoin request type \n");
+                    return 1;
+                }
+
+                return _netif_link(iface, NETOPT_ENABLE << 2 | rejoin_type);
+            }
+            else {
+                return _netif_link(iface, NETOPT_ENABLE);
+            }
         }
         else if (strcmp(argv[2], "down") == 0) {
             return _netif_link(iface, NETOPT_DISABLE);

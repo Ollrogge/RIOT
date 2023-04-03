@@ -27,7 +27,7 @@
 
 #include "net/lorawan/hdr.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 static void _build_join_req_pkt(uint8_t *joineui, uint8_t *deveui,
@@ -54,14 +54,95 @@ static void _build_join_req_pkt(uint8_t *joineui, uint8_t *deveui,
                                         &hdr->mic);
 }
 
+static void _build_rejoin_req_pkt(mlme_join_req_type_t type, uint32_t net_id, uint8_t *dev_eui,
+                                  uint8_t *join_eui,
+                                  uint16_t rj_count, uint8_t *psdu, uint8_t *key)
+{
+    lorawan_hdr_set_mtype((lorawan_hdr_t *)psdu, MTYPE_REJOIN_REQ);
+    lorawan_hdr_set_maj((lorawan_hdr_t *)psdu, MAJOR_LRWAN_R1);
+
+    if (type == REJOIN_REQ_1) {
+        lorawan_rejoin_1_request_t *hdr = (lorawan_rejoin_1_request_t *)psdu;
+        hdr->mt_maj = 0;
+        hdr->type = type;
+        hdr->dev_eui = *((le_uint64_t *)dev_eui);
+        hdr->join_eui = *((le_uint64_t *)join_eui);
+        hdr->rj_count = byteorder_htols(rj_count);
+
+        gnrc_lorawan_calculate_join_req_mic(psdu, REJOIN_1_REQUEST_SIZE - MIC_SIZE, key,
+                                            &hdr->mic);
+    }
+    else {
+        lorawan_rejoin_02_request_t *hdr = (lorawan_rejoin_02_request_t *)psdu;
+        hdr->mt_maj = 0;
+        hdr->type = type;
+        hdr->dev_eui = *((le_uint64_t *)dev_eui);
+        hdr->rj_count = byteorder_htols(rj_count);
+        le_uint32_t l_net_id = byteorder_htoll(net_id);
+        memcpy(hdr->net_id, &l_net_id, LORAMAC_NETWORK_ID_LEN);
+
+        gnrc_lorawan_calculate_join_req_mic(psdu, REJOIN_02_REQUEST_SIZE - MIC_SIZE, key,
+                                            &hdr->mic);
+    }
+}
+
 void gnrc_lorawan_trigger_join(gnrc_lorawan_t *mac)
 {
+    size_t iol_len = 0x0;
+
+    switch (mac->join_type) {
+    case JOIN_REQ:
+        iol_len = sizeof(lorawan_join_request_t);
+        break;
+    case REJOIN_REQ_0:
+    case REJOIN_REQ_2:
+        iol_len = sizeof(lorawan_rejoin_02_request_t);
+        break;
+    case REJOIN_REQ_1:
+        iol_len = sizeof(lorawan_rejoin_1_request_t);
+        break;
+    }
+
     iolist_t pkt = { .iol_base = mac->mcps.mhdr_mic, .iol_len =
-                         sizeof(lorawan_join_request_t), .iol_next = NULL };
+                         iol_len, .iol_next = NULL };
 
     mac->last_chan_idx = gnrc_lorawan_pick_channel(mac);
     gnrc_lorawan_send_pkt(mac, &pkt, mac->last_dr,
                           mac->channel[mac->last_chan_idx]);
+}
+
+static int gnrc_lorawan_send_rejoin_request(gnrc_lorawan_t *mac, mlme_join_req_type_t type,
+                                            uint8_t *dev_eui, uint8_t *join_eui,
+                                            uint8_t dr)
+{
+    DEBUG("gnrc_lorawan: rejoin request \n");
+
+    uint16_t rj_count = 0x0;
+    uint8_t *key;
+
+    if (type == REJOIN_REQ_1) {
+        rj_count = mac->rj_count1;
+        key = mac->ctx.jsintkey;
+    }
+    else {
+        rj_count = mac->rj_count0;
+        key = mac->ctx.snwksintkey;
+    }
+
+    _build_rejoin_req_pkt(type, mac->mlme.nid, dev_eui, join_eui, rj_count,
+                          (uint8_t *)mac->mcps.mhdr_mic, key);
+
+    mac->last_dr = dr;
+    mac->state = LORAWAN_STATE_JOIN;
+
+    /* We need a random delay for join request. Otherwise there might be
+     * network congestion if a group of nodes start at the same time */
+    gnrc_lorawan_set_timer(mac, random_uint32() & GNRC_LORAWAN_JOIN_DELAY_U32_MASK);
+
+    mac->join_type = type;
+    mac->mlme.backoff_budget -= mac->toa;
+
+    return GNRC_LORAWAN_REQ_STATUS_DEFERRED;
 }
 
 static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
@@ -94,6 +175,7 @@ static int gnrc_lorawan_send_join_request(gnrc_lorawan_t *mac, uint8_t *deveui,
 
     mac->last_dr = dr;
     mac->state = LORAWAN_STATE_JOIN;
+    mac->join_type = JOIN_REQ;
 
     /* Use the buffer for MHDR */
     _build_join_req_pkt(eui, deveui, key, mac->mlme.dev_nonce, (uint8_t *)mac->mcps.mhdr_mic);
@@ -113,7 +195,13 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
     int status;
     mlme_confirm_t mlme_confirm;
 
-    if (mac->mlme.activation != MLME_ACTIVATION_NONE) {
+    if (mac->join_type == JOIN_REQ && mac->mlme.activation != MLME_ACTIVATION_NONE) {
+        status = -EBADMSG;
+        goto out;
+    }
+
+    if (IS_USED(MODULE_GNRC_LORAWAN_1_1) && mac->join_type != JOIN_REQ &&
+        mac->mlme.activation != MLME_ACTIVATION_OTAA) {
         status = -EBADMSG;
         goto out;
     }
@@ -128,7 +216,12 @@ void gnrc_lorawan_mlme_process_join(gnrc_lorawan_t *mac, uint8_t *data,
     uint8_t out[GNRC_LORAWAN_JOIN_ACCEPT_MAX_SIZE - 1];
     uint8_t has_cflist = (size - 1) > CFLIST_SIZE;
 
-    gnrc_lorawan_decrypt_join_accept(mac->ctx.nwksenckey, data + 1, has_cflist, out);
+    if (IS_USED(MODULE_GNRC_LORAWAN_1_1) && mac->join_type != JOIN_REQ) {
+        gnrc_lorawan_decrypt_join_accept(gnrc_lorawan_get_jsenckey(mac), data + 1, has_cflist, out);
+    }
+    else {
+        gnrc_lorawan_decrypt_join_accept(mac->ctx.nwksenckey, data + 1, has_cflist, out);
+    }
 
     memcpy(data + 1, out, size - 1);
 
@@ -270,6 +363,7 @@ void gnrc_lorawan_mlme_request(gnrc_lorawan_t *mac,
             mlme_confirm->status = -EINVAL;
             break;
         }
+
         if (!gnrc_lorawan_mac_acquire(mac)) {
             mlme_confirm->status = -EBUSY;
             break;
@@ -291,6 +385,32 @@ void gnrc_lorawan_mlme_request(gnrc_lorawan_t *mac,
                                                               mlme_request->join.joineui,
                                                               mlme_request->join.nwkkey,
                                                               mlme_request->join.dr);
+        break;
+    case MLME_REJOIN:
+        if (IS_USED(MODULE_GNRC_LORAWAN_1_1)) {
+            /* rejoin only possible if device already activated */
+            /*
+               if (mac->mlme.activation != MLME_ACTIVATION_OTAA) {
+                mlme_confirm->status = -EINVAL;
+                break;
+               }
+             */
+
+            if (!gnrc_lorawan_mac_acquire(mac)) {
+                mlme_confirm->status = -EBUSY;
+                break;
+            }
+
+            if (mac->mlme.backoff_budget < 0) {
+                mlme_confirm->status = -EDQUOT;
+                break;
+            }
+
+            mlme_confirm->status = gnrc_lorawan_send_rejoin_request(mac, mlme_request->rejoin.type,
+                                                                    mlme_request->rejoin.deveui,
+                                                                    mlme_request->rejoin.joineui,
+                                                                    mlme_request->join.dr);
+        }
         break;
     case MLME_LINK_CHECK:
         mac->mlme.pending_mlme_opts |=

@@ -95,12 +95,7 @@ void gnrc_lorawan_calculate_join_acpt_mic(const uint8_t *buf, size_t len,
     aes128_cmac_init(&CmacContext, key, LORAMAC_JSINTKEY_LEN);
 
     if (IS_USED(MODULE_GNRC_LORAWAN_1_1) && gnrc_lorawan_optneg_is_set(mac)) {
-        /**
-         *  TODO: JoinReqType hardcoded for now. Will probably move into
-         *  gnrc_lorawan_t struct once ReJoin requests are implemented.
-         */
-        mlme_join_req_type_t type = JOIN_REQ;
-        aes128_cmac_update(&CmacContext, &type, 0x1);
+        aes128_cmac_update(&CmacContext, &mac->join_type, 0x1);
         aes128_cmac_update(&CmacContext, mac->joineui, LORAMAC_JOINEUI_LEN);
         aes128_cmac_update(&CmacContext, mac->mlme.dev_nonce, GNRC_LORAWAN_DEV_NONCE_SIZE);
     }

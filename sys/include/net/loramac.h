@@ -644,7 +644,8 @@ extern "C" {
  *
  *          Must match CHANNELS_MASK_SIZE in src/mac/region/RegionXXYYY.c
  */
-#if defined(REGION_AU915) || defined(REGION_CN470) || defined(REGION_US915) || defined(REGION_US915_HYBRID) || defined(REGION_AS923)
+#if defined(REGION_AU915) || defined(REGION_CN470) || defined(REGION_US915) || \
+    defined(REGION_US915_HYBRID) || defined(REGION_AS923)
 #define LORAMAC_CHANNELS_MASK_LEN                     (6U)
 #else
 #define LORAMAC_CHANNELS_MASK_LEN                     (1U)
@@ -661,25 +662,25 @@ extern "C" {
  * @brief   Device class
  */
 typedef enum {
-    LORAMAC_CLASS_A,                   /**< Class A device */
-    LORAMAC_CLASS_B,                   /**< Class B device */
-    LORAMAC_CLASS_C,                   /**< Class C device */
+    LORAMAC_CLASS_A,                    /**< Class A device */
+    LORAMAC_CLASS_B,                    /**< Class B device */
+    LORAMAC_CLASS_C,                    /**< Class C device */
 } loramac_class_t;
 
 /**
  * @brief   LoRaMAC network join procedure type
  */
 typedef enum {
-    LORAMAC_JOIN_OTAA,                 /**< Other-the-air activation */
-    LORAMAC_JOIN_ABP,                  /**< Activation by personnalization */
+    LORAMAC_JOIN_OTAA,                  /**< Other-the-air activation */
+    LORAMAC_JOIN_ABP,                   /**< Activation by personnalization */
 } loramac_join_mode_t;
 
 /**
  * @brief   LoRaMAC transmission mode
  */
 typedef enum {
-    LORAMAC_TX_CNF,                    /**< Confirmable transmission mode */
-    LORAMAC_TX_UNCNF,                  /**< Unconfirmable transmission mode */
+    LORAMAC_TX_CNF,                     /**< Confirmable transmission mode */
+    LORAMAC_TX_UNCNF,                   /**< Unconfirmable transmission mode */
 } loramac_tx_mode_t;
 
 /**
@@ -1059,13 +1060,13 @@ typedef enum {
 /**
  * @brief   A LoRaMAC network channel
  */
- typedef struct {
-    uint32_t freq;                     /**< Center frequency in Hz */
-    uint8_t index;                     /**< Channel index in defined list */
-    uint8_t bw;                        /**< Bandwidth index */
-    uint8_t dr_min;                    /**< Minimum datarate index */
-    uint8_t dr_max;                    /**< Maximum datarate index */
-    uint8_t dcycle;                    /**< Duty cycle to use on this channel (1 to 100) */
+typedef struct {
+    uint32_t freq;                      /**< Center frequency in Hz */
+    uint8_t index;                      /**< Channel index in defined list */
+    uint8_t bw;                         /**< Bandwidth index */
+    uint8_t dr_min;                     /**< Minimum datarate index */
+    uint8_t dr_max;                     /**< Maximum datarate index */
+    uint8_t dcycle;                     /**< Duty cycle to use on this channel (1 to 100) */
 } loramac_channel_t;
 
 /**
@@ -1089,7 +1090,7 @@ static inline uint32_t lora_time_on_air(size_t pkt_len, loramac_dr_idx_t dr, uin
         { 1, 4, 5, 4 }, /* DR3 */
         { 1, 3, 4, 4 }, /* DR4 */
         { 1, 2, 4, 3 }  /* DR5 */
-        };
+    };
 
     uint32_t t_sym = 1 << (15 - dr);
     uint32_t t_preamble = (t_sym << 3) + (t_sym << 2) + (t_sym >> 2);
