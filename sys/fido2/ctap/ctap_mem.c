@@ -25,13 +25,18 @@
 #include "fido2/ctap/ctap_mem.h"
 #include "fido2/ctap/ctap_utils.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
+#ifdef BOARD_NATIVE
+extern char _native_flash[FLASHPAGE_SIZE * FLASHPAGE_NUMOF];
+char *_backing_memory = _native_flash;
+#else
 /**
  * @brief Reserve flash memory to store CTAP data
  */
 FLASH_WRITABLE_INIT(_backing_memory, CONFIG_FIDO2_CTAP_NUM_FLASHPAGES);
+#endif
 
 /**
  * @brief   MTD device descriptor initialized with flash-page driver
@@ -214,7 +219,8 @@ ctap_status_code_t fido2_ctap_mem_write_state_to_flash(ctap_state_t *state)
     return _flash_write(state, addr, CTAP_FLASH_STATE_SZ);
 }
 
-ctap_status_code_t fido2_ctap_mem_read_rk_from_flash(ctap_resident_key_t *key, uint8_t *rp_id_hash, uint32_t *addr)
+ctap_status_code_t fido2_ctap_mem_read_rk_from_flash(ctap_resident_key_t *key, uint8_t *rp_id_hash,
+                                                     uint32_t *addr)
 {
     uint16_t end;
     uint16_t amt_stored = fido2_ctap_get_state()->rk_amount_stored;
