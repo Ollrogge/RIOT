@@ -1,0 +1,20 @@
+# name of your application
+APPLICATION = tcp_echo
+
+# Turn on developer helpers
+DEVELHELP ?= 1
+
+BOARD ?= native
+RIOTBASE ?= ../../
+
+TCP_SERVER_ADDR ?= "2001:db8::1"
+TCP_SERVER_ADDR_PREFIX ?= 64
+TCP_SERVER_PORT ?= 4223
+
+CFLAGS += -DSERVER_ADDR=\"$(TCP_SERVER_ADDR)\"
+CFLAGS += -DSERVER_ADDR_PREFIX=$(TCP_SERVER_ADDR_PREFIX)
+CFLAGS += -DSERVER_PORT=$(TCP_SERVER_PORT)
+
+USEMODULE += gnrc_tcp
+
+include $(RIOTBASE)/Makefile.include

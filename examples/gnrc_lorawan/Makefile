@@ -28,8 +28,10 @@ USEMODULE += shell_cmds_default
 USEMODULE += gnrc_txtsnd
 
 # Uncomment as needed if a board doesn't include a LoRa radio by default
-# USEMODULE += sx1272
-# USEMODULE += sx1276
+#USEMODULE += sx1272
+USEMODULE += sx1276
+
+DISABLE_MODULE += cortexm_fpu
 
 # As there is an 'app.config' we want to explicitly disable Kconfig by setting
 # the variable to empty

@@ -43,7 +43,7 @@ static void _usage(char *cmd)
     printf("       %s request <name>\n", cmd);
 }
 
-static int _dns_server(int argc, char **argv)
+static int _dns_server(int argc, char **argv)   
 {
     if (((argc > 2) && !inet_pton(AF_INET6, argv[2],
                                   sock_dns_server.addr.ipv6)) ||
