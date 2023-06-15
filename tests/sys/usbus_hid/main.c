@@ -70,7 +70,7 @@ static void init(void)
 int main(void)
 {
     /* sleep to wait for Pyterm attaching in order to see puts messages */
-    xtimer_sleep(3);
+    //xtimer_sleep(3);
     init();
     puts("RIOT USB HID echo test");
     puts(

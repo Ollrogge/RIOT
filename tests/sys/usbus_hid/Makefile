@@ -9,4 +9,6 @@ DISABLE_MODULE += auto_init_usbus
 USB_VID ?= $(USB_VID_TESTING)
 USB_PID ?= $(USB_PID_TESTING)
 
+DISABLE_MODULE += cortexm_fpu
+
 include $(RIOTBASE)/Makefile.include

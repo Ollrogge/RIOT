@@ -27,6 +27,9 @@
 #include "net/sock/udp.h"
 #include "net/sock/dns.h"
 
+#define ENABLE_DEBUG    (1)
+#include "debug.h"
+
 /* min domain name length is 1, so minimum record length is 7 */
 #define DNS_MIN_REPLY_LEN   (unsigned)(sizeof(dns_hdr_t) + 7)
 
@@ -65,6 +68,18 @@ void auto_init_sock_dns(void)
     sock_dns_server.port = CONFIG_AUTO_INIT_SOCK_DNS_SERVER_PORT;
 }
 #endif /* MODULE_AUTO_INIT_SOCK_DNS */
+int __attribute__ ((noinline)) test(void) {
+    return 128;
+}
+
+int will_crash(void) {
+    uint64_t *crash = (uint64_t*)0xdeadbeef;
+    if (*crash) {
+        *crash = 0x414141;
+    }
+
+    return 0;
+}
 
 int sock_dns_query(const char *domain_name, void *addr_out, int family)
 {

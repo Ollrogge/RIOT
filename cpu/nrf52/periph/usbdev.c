@@ -577,7 +577,8 @@ static signed _ep0_esr(usbdev_ep_t *ep)
             usbdev->device->EVENTS_EP0SETUP = 0;
             event = USBDEV_EVENT_TR_COMPLETE;
             /* Copy setup request info to buffer */
-            _copy_setup(ep);
+            //_copy_setup(ep);
+            (void)_copy_setup;
             if ((uint8_t)usbdev->device->BREQUEST == 0x05) {
                 event = 0;
             }

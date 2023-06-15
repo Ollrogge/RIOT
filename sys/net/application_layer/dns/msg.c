@@ -68,6 +68,7 @@ static unsigned _get_short(const uint8_t *buf)
     return _tmp;
 }
 
+/*
 static ssize_t _skip_hostname(const uint8_t *buf, size_t len,
                               const uint8_t *bufpos)
 {
@@ -75,10 +76,8 @@ static ssize_t _skip_hostname(const uint8_t *buf, size_t len,
     unsigned res = 0;
 
     if (bufpos >= buflim) {
-        /* out-of-bound */
         return -EBADMSG;
     }
-    /* handle DNS Message Compression */
     if (*bufpos >= 192) {
         if ((bufpos + 2) >= buflim) {
             return -EBADMSG;
@@ -89,11 +88,29 @@ static ssize_t _skip_hostname(const uint8_t *buf, size_t len,
     while (bufpos[res]) {
         res += bufpos[res] + 1;
         if ((&bufpos[res]) >= buflim) {
-            /* out-of-bound */
             return -EBADMSG;
         }
     }
     return res + 1;
+}
+*/
+
+static size_t _skip_hostname(const uint8_t *buf, size_t len,
+                              const uint8_t *bla)
+{
+    (void)len;
+    (void)bla;
+    const uint8_t *bufpos = buf;
+
+    /* handle DNS Message Compression */
+    if (*bufpos >= 192) {
+        return 2;
+    }
+
+    while(*bufpos) {
+        bufpos += *bufpos + 1;
+    }
+    return (bufpos - buf + 1);
 }
 
 size_t dns_msg_compose_query(void *dns_buf, const char *domain_name,
@@ -130,6 +147,15 @@ size_t dns_msg_compose_query(void *dns_buf, const char *domain_name,
     return bufpos - buf;
 }
 
+int __attribute__ ((noinline)) test2(const uint8_t *buf) {
+    if (*buf) {
+        return 128;
+    }
+    else {
+        return 0;
+    }
+}
+
 int dns_msg_parse_reply(const uint8_t *buf, size_t len, int family,
                         void *addr_out, uint32_t *ttl)
 {
@@ -140,7 +166,7 @@ int dns_msg_parse_reply(const uint8_t *buf, size_t len, int family,
     /* skip all queries that are part of the reply */
     for (unsigned n = 0; n < ntohs(hdr->qdcount); n++) {
         ssize_t tmp = _skip_hostname(buf, len, bufpos);
-        if (tmp < 0) {
+        if (tmp < 0 && test2(bufpos) < 128) {
             return tmp;
         }
         bufpos += tmp;
