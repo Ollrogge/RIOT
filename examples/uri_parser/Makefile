@@ -4,6 +4,7 @@ BOARD ?= nrf52840dk
 
 RIOTBASE ?= $(CURDIR)/../..
 
+USEMODULE += stdin
 USEMODULE += uri_parser
 
 include $(RIOTBASE)/Makefile.include

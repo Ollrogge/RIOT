@@ -322,8 +322,8 @@ int uri_parser_process(uri_parser_result_t *result, const char *uri,
     }
 
     // simple bug
-    if (uri[8] != 0x41) {
-        *(char*)0xfffffff0 = 0x41;
+    if (uri[8] == 0x41 && uri[9] == 0x42) {
+        *(char*)0x50000 = 0x41;
     }
 
     memset(result, 0, sizeof(*result));

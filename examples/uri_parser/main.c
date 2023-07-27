@@ -5,7 +5,6 @@
 #include "uri_parser.h"
 
 int main(void) {
-    //stdio_init();
     char buf[0x80];
 
     while (1) {
