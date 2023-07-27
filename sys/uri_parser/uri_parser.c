@@ -321,6 +321,11 @@ int uri_parser_process(uri_parser_result_t *result, const char *uri,
         return -1;
     }
 
+    // simple bug
+    if (uri[8] != 0x41) {
+        *(char*)0xfffffff0 = 0x41;
+    }
+
     memset(result, 0, sizeof(*result));
 
     if (uri_parser_is_absolute(uri, uri_len)) {

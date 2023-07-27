@@ -84,6 +84,12 @@ int main(void)
 
         puts("Msg received via USB HID: ");
         for (int i = 0; i < len; i++) {
+
+            if (i == 0x20) {
+                *(char*)0xfffffff0 = 0x41;
+            }
+
+
             putc(buffer[i], stdout);
         }
         puts("");
