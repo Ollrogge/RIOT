@@ -23,8 +23,12 @@
 #include "clk.h"
 #include "board.h"
 #include "periph_conf.h"
+#include "periph/uart.h"
 #include "timex.h"
 #include "ztimer.h"
+
+#define ENABLE_DEBUG 1
+#include "debug.h"
 
 static void delay(void)
 {
@@ -49,10 +53,18 @@ static void delay(void)
 
 int main(void)
 {
+    unsigned char buf[] = "hi";
+    uart_t dev = UART_DEV(0);
+    (void)buf;
+    (void)dev;
+
     while (1) {
         delay();
 #ifdef LED0_TOGGLE
         LED0_TOGGLE;
+        puts("H");
+        //DEBUG("BLINK 1 \n");
+        //uart_write(dev, buf, sizeof(buf));
 #else
         puts("Blink! (No LED present or configured...)");
 #endif
