@@ -533,6 +533,24 @@ static int _set(gnrc_netif_t *netif, const gnrc_netapi_opt_t *opt)
         _memcpy_reversed(netif->lorawan.nwksenckey, opt->data,
                          LORAMAC_NWKSKEY_LEN);
         break;
+    case NETOPT_LORAWAN_REJOIN_REQUEST:
+    {
+        mlme_join_req_type_t rj_type = *(mlme_join_req_type_t*)opt->data;
+        if (!netif->lorawan.otaa || rj_type > REJOIN_REQ_2) {
+            res = -EINVAL;
+            break;
+        }
+        mlme_request.type = MLME_REJOIN;
+        mlme_request.rejoin.deveui = netif->lorawan.deveui;
+        mlme_request.rejoin.joineui = netif->lorawan.joineui;
+        mlme_request.rejoin.type = rj_type;
+
+        mlme_request.join.dr = netif->lorawan.datarate;
+
+        gnrc_lorawan_mlme_request(&netif->lorawan.mac,
+                                          &mlme_request, &mlme_confirm);
+        break;
+    }
 #else
     case NETOPT_LORAWAN_APPKEY:
         assert(opt->data_len == LORAMAC_NWKKEY_LEN);

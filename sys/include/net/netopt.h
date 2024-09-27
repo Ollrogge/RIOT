@@ -645,6 +645,13 @@ typedef enum {
      */
     NETOPT_LORAWAN_NWKSENCKEY,
 
+    /**
+     * @brief   (uint8_t) LoRaWAN ReJoin reuest. Can be type (0, 1, 2)
+     *
+     * This is only used when using LoRaWAN 1.1x
+     */
+    NETOPT_LORAWAN_REJOIN_REQUEST,
+
      /**
      * @brief   (uint8_t) LoRaWAN device class (A, B, C)
      * - LoRaWAN: @ref loramac_class_t

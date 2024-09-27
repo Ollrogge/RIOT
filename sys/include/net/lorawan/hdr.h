@@ -102,6 +102,30 @@ typedef struct __attribute__((packed)) {
 } lorawan_join_request_t;
 
 /**
+ * @brief ReJoin request 0 / 2 packet representation
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t mt_maj;                         /**< mtype and major version holder */
+    uint8_t type;                           /**< ReJoin request type */
+    uint8_t net_id[LORAMAC_NETWORK_ID_LEN]; /**< NetID */
+    le_uint64_t dev_eui;                    /**< device EUI */
+    le_uint16_t rj_count;                   /**< rejoin counter */
+    le_uint32_t mic;                        /**< message integrity code */
+} lorawan_rejoin_0_2_request_t;
+
+/**
+ * @brief ReJoin request 1 packet representation
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t mt_maj;                         /**< mtype and major version holder */
+    uint8_t type;                           /**< ReJoin request type */
+    le_uint64_t join_eui;                   /**< join EUI */
+    le_uint64_t dev_eui;                    /**< device EUI */
+    le_uint16_t rj_count;                   /**< rejoin counter */
+    le_uint32_t mic;                        /**< message integrity code */
+} lorawan_rejoin_1_request_t;
+
+/**
  * @brief Join accept packet representation
  */
 typedef struct __attribute__((packed)) {

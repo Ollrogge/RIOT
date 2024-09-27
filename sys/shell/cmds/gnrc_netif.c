@@ -33,6 +33,7 @@
 #include "net/lora.h"
 #include "net/loramac.h"
 #include "net/netif.h"
+#include "net/netopt.h"
 #include "shell.h"
 
 #ifdef MODULE_NETSTATS
@@ -333,6 +334,10 @@ static void _print_netopt(netopt_t opt)
 
     case NETOPT_LORAWAN_FNWKSINTKEY:
         printf("FNwkSIntKey");
+        break;
+
+    case NETOPT_LORAWAN_REJOIN_REQUEST:
+        printf("ReJoin request");
         break;
 #else
     case NETOPT_LORAWAN_APPEUI:
@@ -1485,6 +1490,13 @@ static void _l2filter_usage(const char *cmd)
 }
 #endif
 
+#ifdef MODULE_GNRC_LORAWAN_1_1
+static void _lorawan_rejoin_usage(char* cmd)
+{
+    printf("usage: %s <if_id> rejoin {0|1|2}\n", cmd);
+}
+#endif
+
 static void _usage(char *cmd)
 {
     printf("usage: %s\n", cmd);
@@ -1494,6 +1506,9 @@ static void _usage(char *cmd)
     _flag_usage(cmd);
     _add_usage(cmd);
     _del_usage(cmd);
+#ifdef MODULE_GNRC_LORAWAN_1_1
+    _lorawan_rejoin_usage(cmd);
+#endif
 #ifdef MODULE_L2FILTER
     _l2filter_usage(cmd);
 #endif
@@ -1880,6 +1895,11 @@ int _gnrc_netif_config(int argc, char **argv)
 
             return _netif_del(iface, argv[3]);
         }
+#ifdef MODULE_GNRC_LORAWAN_1_1
+        else if (strcmp(argv[2], "rejoin") == 0) {
+            return _netif_set_u8(iface, NETOPT_LORAWAN_REJOIN_REQUEST, 0, argv[3]);
+        }
+#endif
 #ifdef MODULE_L2FILTER
         else if (strcmp(argv[2], "l2filter") == 0) {
             if (argc < 5) {

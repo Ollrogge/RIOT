@@ -18,6 +18,7 @@
 #ifndef GNRC_LORAWAN_INTERNAL_H
 #define GNRC_LORAWAN_INTERNAL_H
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include "iolist.h"
@@ -49,6 +50,8 @@ extern "C" {
 #define MINOR_LRWAN    0x1                              /**< Minor LoRaWAN version of device */
 
 #define JOIN_REQUEST_SIZE (23U)                         /**< Join Request size in bytes */
+#define REJOIN_0_2_REQUEST_SIZE (19U)                   /**< ReJoin Request 0 / 2 size in bytes */
+#define REJOIN_1_REQUEST_SIZE (24U)                     /**< ReJoin Request 1 size in bytes */
 #define MIC_SIZE (4U)                                   /**< MIC size in bytes */
 #define CFLIST_SIZE (16U)                               /**< Channel Frequency list size in bytes */
 
@@ -155,6 +158,15 @@ typedef enum {
 } mlme_join_req_type_t;
 
 /**
+ * @brief MLME ReJoin Request data
+ */
+typedef struct {
+    mlme_join_req_type_t type;
+    void *joineui;  /**< pointer to the Join EUI */
+    void *deveui;   /**< pointer to the Device EUI */
+} mlme_lorawan_rejoin_t;
+
+/**
  * @brief MLME Link Check confirmation data
  */
 typedef struct {
@@ -224,8 +236,11 @@ typedef struct {
     void *mcps_buf;                                 /**< pointer to MCPS buffer */
     uint8_t *joineui;                               /**< pointer to Join EUI */
     gnrc_lorawan_key_ctx_t ctx;                     /**< GNRC LoRaWAN key context struct */
+    mlme_join_req_type_t join_type;                 /**< Type of last join request */
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
-    bool optneg;                                    /**< optneg bit */
+    bool optneg;                                    /**< Identifier indicating if network backend implements LoRaWAN 1.0 or 1.1 */
+    uint16_t rj_count0;                             /**< Counter for type 0 and 2 Rejoin frames transmitted*/
+    uint16_t rj_count1;                             /**< Counter for type 1 Rejoin frames transmitted */
 #endif
     uint32_t channel[GNRC_LORAWAN_MAX_CHANNELS];    /**< channel array */
     uint16_t channel_mask;                          /**< channel mask */
@@ -657,6 +672,24 @@ static inline void gnrc_lorawan_set_optneg(gnrc_lorawan_t *mac, uint8_t optneg)
 
 #if IS_USED(MODULE_GNRC_LORAWAN_1_1)
     mac->optneg = optneg;
+#endif
+}
+
+static inline void gnrc_lorawan_set_rjcount0(gnrc_lorawan_t *mac, uint16_t rj_count) {
+    (void)mac;
+    (void)rj_count;
+
+#if IS_USED(MODULE_GNRC_LORAWAN_1_1)
+    mac->rj_count0 = rj_count;
+#endif
+}
+
+static inline void gnrc_lorawan_set_rjcount1(gnrc_lorawan_t *mac, uint16_t rj_count) {
+    (void)mac;
+    (void)rj_count;
+
+#if IS_USED(MODULE_GNRC_LORAWAN_1_1)
+    mac->rj_count1 = rj_count;
 #endif
 }
 
