@@ -32,23 +32,23 @@
 #include "fido2/ctap/ctap_mem.h"
 
 #if IS_USED(MODULE_FIDO2_CTAP_TRANSPORT_HID)
-#include "fido2/ctap/transport/hid/ctap_hid.h"
+#  include "fido2/ctap/transport/hid/ctap_hid.h"
 #endif
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 /**
  * @brief CTAP get_assertion state
  */
 typedef struct {
-    ctap_resident_key_t rks[CTAP_MAX_EXCLUDE_LIST_SIZE];    /**< eligible resident keys found */
-    uint8_t count;                                          /**< number of rks found  */
-    uint8_t cred_counter;                                   /**< amount of creds sent to host */
-    uint32_t timer;                                         /**< time gap between get_next_assertion calls in milliseconds  */
-    bool uv;                                                /**< indicate if user verified */
-    bool up;                                                /**< indicate if user present */
-    uint8_t client_data_hash[SHA256_DIGEST_LENGTH];         /**< SHA-256 hash of JSON serialized client data */
+    ctap_resident_key_t rks[CTAP_MAX_EXCLUDE_LIST_SIZE]; /**< eligible resident keys found */
+    uint8_t count;                                       /**< number of rks found  */
+    uint8_t cred_counter;                                /**< amount of creds sent to host */
+    uint32_t timer;                                      /**< time gap between get_next_assertion calls in milliseconds  */
+    bool uv;                                             /**< indicate if user verified */
+    bool up;                                             /**< indicate if user present */
+    uint8_t client_data_hash[SHA256_DIGEST_LENGTH];      /**< SHA-256 hash of JSON serialized client data */
 } ctap_get_assertion_state_t;
 
 /*** CTAP methods ***/
@@ -535,8 +535,7 @@ static int _make_credential(ctap_req_t *req_raw)
         uv = true;
     }
     /* CTAP specification (version 20190130) section 5.5.8.1 */
-    else if (!fido2_ctap_pin_is_set() && req.pin_auth_present
-             && req.pin_auth_len == 0) {
+    else if (!fido2_ctap_pin_is_set() && req.pin_auth_present && req.pin_auth_len == 0) {
         if (!IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP)) {
             fido2_ctap_utils_user_presence_test();
         }
@@ -659,8 +658,7 @@ static int _get_assertion(ctap_req_t *req_raw)
         _assert_state.uv = true;
     }
     /* CTAP specification (version 20190130) section 5.5.8.2 */
-    else if (!fido2_ctap_pin_is_set() && req.pin_auth_present
-             && req.pin_auth_len == 0) {
+    else if (!fido2_ctap_pin_is_set() && req.pin_auth_present && req.pin_auth_len == 0) {
         if (!IS_ACTIVE(CONFIG_FIDO2_CTAP_DISABLE_UP)) {
             fido2_ctap_utils_user_presence_test();
         }
@@ -1414,9 +1412,9 @@ static int _find_matching_rks(ctap_resident_key_t *rks, size_t rks_len,
     }
 
     ctap_resident_key_t rk = { 0 };
-    uint32_t addr = 0x0;
+    uint32_t off = 0x0;
 
-    while (fido2_ctap_mem_read_rk_from_flash(&rk, rp_id_hash, &addr) == CTAP2_OK) {
+    while (fido2_ctap_mem_read_rk_from_flash(&rk, rp_id_hash, &off) == CTAP2_OK) {
         if (allow_list_len == 0) {
             memcpy(&rks[index], &rk, sizeof(rk));
             index++;

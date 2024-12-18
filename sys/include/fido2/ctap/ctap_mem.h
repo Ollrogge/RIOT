@@ -20,74 +20,75 @@
  */
 
 #ifndef FIDO2_CTAP_CTAP_MEM_H
-#define FIDO2_CTAP_CTAP_MEM_H
+#  define FIDO2_CTAP_CTAP_MEM_H
 
-#include <stdint.h>
+#  include <stdint.h>
 
-#include "fido2/ctap/ctap.h"
-#include "periph/flashpage.h"
+#  include "fido2/ctap/ctap.h"
+#  include "periph/flashpage.h"
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
 /**
  * @brief   MAX function for internal use
  * @{
  */
-#ifndef _MAX
-#define _MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
+#  ifndef _MAX
+#    define _MAX(a, b) ((a) > (b) ? (a) : (b))
+#  endif
 /** @} */
 
 /**
  * @brief   Default amount of flashpages to use
  */
-#ifndef CONFIG_FIDO2_CTAP_NUM_FLASHPAGES
-#define CONFIG_FIDO2_CTAP_NUM_FLASHPAGES 4
-#endif
+#  ifndef CONFIG_FIDO2_CTAP_NUM_FLASHPAGES
+#    define CONFIG_FIDO2_CTAP_NUM_FLASHPAGES 4
+#  endif
 
-#if CONFIG_FIDO2_CTAP_NUM_FLASHPAGES < 2
-#error "ctap_mem.h: Configured number of flashpages is invalid"
-#endif
+#  if CONFIG_FIDO2_CTAP_NUM_FLASHPAGES < 2
+#    error "ctap_mem.h: Configured number of flashpages is invalid"
+#  endif
 
 /**
  * @brief Calculate padding needed to align struct size for saving to flash
  */
-#define CTAP_FLASH_ALIGN_PAD(x) (sizeof(x) % FLASHPAGE_WRITE_BLOCK_SIZE == \
-                                 0 ? \
-                                 0 : FLASHPAGE_WRITE_BLOCK_SIZE - \
-                                 sizeof(x) % FLASHPAGE_WRITE_BLOCK_SIZE)
+#  define CTAP_FLASH_ALIGN_PAD(x) (sizeof(x) % FLASHPAGE_WRITE_BLOCK_SIZE == \
+                                           0 ?                               \
+                                       0 :                                   \
+                                       FLASHPAGE_WRITE_BLOCK_SIZE -          \
+                                           sizeof(x) % FLASHPAGE_WRITE_BLOCK_SIZE)
 
 /**
  * @brief Resident key size with alignment padding
  */
-#define CTAP_FLASH_RK_SZ (sizeof(ctap_resident_key_t) + \
-                          CTAP_FLASH_ALIGN_PAD(ctap_resident_key_t))
+#  define CTAP_FLASH_RK_SZ (sizeof(ctap_resident_key_t) + \
+                            CTAP_FLASH_ALIGN_PAD(ctap_resident_key_t))
 
 /**
  * @brief State struct size with alignment padding
  */
-#define CTAP_FLASH_STATE_SZ (sizeof(ctap_state_t) + \
-                             CTAP_FLASH_ALIGN_PAD(ctap_state_t))
+#  define CTAP_FLASH_STATE_SZ (sizeof(ctap_state_t) + \
+                               CTAP_FLASH_ALIGN_PAD(ctap_state_t))
 
 /**
  * @brief Max amount of resident keys that can be stored on device
  */
-#define CTAP_FLASH_MAX_NUM_RKS ((CONFIG_FIDO2_CTAP_NUM_FLASHPAGES - 1) * \
-                                FLASHPAGE_SIZE / CTAP_FLASH_RK_SZ)
+#  define CTAP_FLASH_MAX_NUM_RKS ((CONFIG_FIDO2_CTAP_NUM_FLASHPAGES - 1) * \
+                                  FLASHPAGE_SIZE / CTAP_FLASH_RK_SZ)
 
 /**
  * @brief Minimum flash sector size needed to hold CTAP related data
  *
  * This is needed to ensure that the MTD work_area buffer is big enough
  */
-#define CTAP_FLASH_MIN_SECTOR_SZ _MAX(CTAP_FLASH_STATE_SZ, CTAP_FLASH_RK_SZ)
+#  define CTAP_FLASH_MIN_SECTOR_SZ    _MAX(CTAP_FLASH_STATE_SZ, CTAP_FLASH_RK_SZ)
 
 /**
  * @brief Pages per sector needed
  */
-#define CTAP_FLASH_PAGES_PER_SECTOR ((CTAP_FLASH_MIN_SECTOR_SZ / FLASHPAGE_SIZE) + 1)
+#  define CTAP_FLASH_PAGES_PER_SECTOR ((CTAP_FLASH_MIN_SECTOR_SZ / FLASHPAGE_SIZE) + 1)
 
 /**
  * Offset of flashpage for storing resident keys
@@ -95,7 +96,7 @@ extern "C" {
  * The offset is in units of flashpages from the beginning of the flash memory
  * area dedicated for storing CTAP data.
  */
-#define CTAP_FLASH_RK_OFF 0x1
+#  define CTAP_FLASH_RK_OFF           0x1
 
 /**
  * @brief Initialize memory helper
@@ -155,8 +156,8 @@ ctap_status_code_t fido2_ctap_mem_write_state_to_flash(ctap_state_t *state);
  *
  * @return @ref ctap_status_code_t
  */
-ctap_status_code_t fido2_ctap_mem_read_rk_from_flash(ctap_resident_key_t *key, uint8_t *rp_id_hash,
-                                                     uint32_t *addr);
+ctap_status_code_t fido2_ctap_mem_read_rk_from_flash(ctap_resident_key_t *key, const uint8_t *rp_id_hash,
+                                                     uint32_t *absolute_offset);
 
 /**
  * @brief Write resident credential to flash
@@ -167,8 +168,8 @@ ctap_status_code_t fido2_ctap_mem_read_rk_from_flash(ctap_resident_key_t *key, u
  */
 ctap_status_code_t fido2_ctap_mem_write_rk_to_flash(ctap_resident_key_t *rk);
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 }
-#endif
+#  endif
 #endif /* FIDO2_CTAP_CTAP_MEM_H */
 /** @} */

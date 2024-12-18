@@ -15,6 +15,8 @@ USEMODULE += embunit
 
 USEMODULE += fido2_ctap
 
+SLOT_AUX_LEN := 0x1000
+
 # Disable user presence tests
 CFLAGS += -DCONFIG_FIDO2_CTAP_DISABLE_UP=1
 
