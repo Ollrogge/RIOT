@@ -15,6 +15,7 @@ CFLAGS += -D_FORTIFY_SOURCE=2  # Compiler hardening
 
 # Various utilitiy modules
 USEMODULE += gnrc_ipv6
+USEMODULE += sema_inv
 USEMODULE += fuzzing
 USEMODULE += ssp
 

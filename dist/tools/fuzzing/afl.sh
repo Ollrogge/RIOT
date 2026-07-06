@@ -6,5 +6,5 @@ if [ ! -d "${APPDIR}/input" ]; then
 fi
 
 mkdir -p "${APPDIR}/findings"
-exec afl-fuzz -m 800 -i "${APPDIR}/input" -o "${APPDIR}/findings" "$@" -- \
+exec afl-fuzz -i "${APPDIR}/input" -o "${APPDIR}/findings" "$@" -- \
 	"${FLASHFILE}" "${PORT}" ${TERMFLAGS}
